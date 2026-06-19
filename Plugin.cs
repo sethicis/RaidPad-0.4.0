@@ -1,0 +1,863 @@
+﻿using SPT.Reflection.Patching;
+using BepInEx;
+using System.Reflection;
+using UnityEngine;
+using EFT.UI;
+using EFT.UI.DragAndDrop;
+using System.Linq;
+using EFT.InventoryLogic;
+using System.Collections.Generic;
+using EFT;
+using HarmonyLib;
+using BepInEx.Configuration;
+using UnityEngine.UI;
+using System.Threading.Tasks;
+using Sirenix.Utilities;
+using EFT.InputSystem;
+using UnityEngine.EventSystems;
+
+namespace RaidPad
+{
+    [BepInPlugin("com.thablackunicorn.raidpad", "RaidPad", "0.4.0")]
+    public class RaidPadPlugin : BaseUnityPlugin
+    {
+        public static GameObject Hook;
+        public static RaidPadClass RaidPadClassComponent;
+        public static InputGetKeyDownLeftControlPatch LeftControl;
+        public static BepInEx.Logging.ManualLogSource Log;
+
+        // RaidPad
+        public static ConfigEntry<int> UserIndex { get; set; }
+
+        // Input
+        public static ConfigEntry<float> LSDeadzone { get; set; }
+        public static ConfigEntry<float> RSDeadzone { get; set; }
+        public static ConfigEntry<float> LTDeadzone { get; set; }
+        public static ConfigEntry<float> RTDeadzone { get; set; }
+        public static ConfigEntry<float> DoubleClickDelay { get; set; }
+        public static ConfigEntry<float> HoldDelay { get; set; }
+
+        // Aim
+        public static ConfigEntry<bool> HoldAim { get; set; }
+        public static ConfigEntry<Vector2> Sensitivity { get; set; }
+        public static ConfigEntry<Vector2> AimingSensitivity { get; set; }
+        public static ConfigEntry<bool> InvertY { get; set; }
+        public static ConfigEntry<float> AimDeadzone { get; set; }
+
+        // Aim Assist
+        public static ConfigEntry<bool> Magnetism { get; set; }
+        public static ConfigEntry<float> Stickiness { get; set; }
+        public static ConfigEntry<float> StickinessSmooth { get; set; }
+        public static ConfigEntry<float> AutoAim { get; set; }
+        public static ConfigEntry<float> AutoAimSmooth { get; set; }
+        public static ConfigEntry<float> MagnetismRadius { get; set; }
+        public static ConfigEntry<float> StickinessRadius { get; set; }
+        public static ConfigEntry<float> AutoAimRadius { get; set; }
+        public static ConfigEntry<float> Radius { get; set; }
+
+
+        // Movement
+        public static ConfigEntry<float> MovementDeadzone { get; set; }
+        public static ConfigEntry<float> DeadzoneBuffer { get; set; }
+        public static ConfigEntry<float> LeanSensitivity { get; set; }
+
+        // UI
+        public static ConfigEntry<bool> DualsenseIcons { get; set; }
+        public static ConfigEntry<float> ScrollSensitivity { get; set; }
+        public static ConfigEntry<ERaidPadUseStick> InterfaceStick { get; set; }
+        public static ConfigEntry<ERaidPadUseStick> InterfaceSkipStick { get; set; }
+        public static ConfigEntry<ERaidPadUseStick> ScrollStick { get; set; }
+        public static ConfigEntry<ERaidPadUseStick> WindowStick { get; set; }
+
+        // UI Selected Box
+        public static ConfigEntry<Color> SelectColor { get; set; }
+
+        // UI Button Blocks
+        public static ConfigEntry<Vector2> BlockPosition { get; set; }
+        public static ConfigEntry<Vector2> BlockSize { get; set; }
+        public static ConfigEntry<int> BlockSpacing { get; set; }
+        public static ConfigEntry<int> BlockIconSpacing { get; set; }
+        public static ConfigEntry<int> PressFontSize { get; set; }
+        public static ConfigEntry<int> HoldDoubleClickFontSize { get; set; }
+
+        private void Awake()
+        {
+            // Host the controller component on the plugin's own (BepInEx-managed, persistent)
+            // GameObject. A separately-created GameObject was being destroyed before Unity
+            // could run its Start()/Update(), which killed the input loop on SPT 4.0.x.
+            Hook = this.gameObject;
+            RaidPadClassComponent = Hook.AddComponent<RaidPadClass>();
+            DontDestroyOnLoad(Hook);
+        }
+
+        private void Start()
+        {
+
+            UserIndex = Config.Bind("RaidPad", "User Index", 1, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100 }));
+
+            LSDeadzone = Config.Bind("Inputs", "LSDeadzone", 0.25f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 150, IsAdvanced = true }));
+            RSDeadzone = Config.Bind("Inputs", "RSDeadzone", 0.25f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 140, IsAdvanced = true }));
+            LTDeadzone = Config.Bind("Inputs", "LTDeadzone", 0.25f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 130, IsAdvanced = true }));
+            RTDeadzone = Config.Bind("Inputs", "RTDeadzone", 0.25f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 120, IsAdvanced = true }));
+            DoubleClickDelay = Config.Bind("Inputs", "DoubleClickDelay", 0.25f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 110, IsAdvanced = true }));
+            HoldDelay = Config.Bind("Inputs", "HoldDelay", 0.25f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100, IsAdvanced = true }));
+
+            HoldAim = Config.Bind("Aim", "HoldAim", false, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 150 }));
+            Sensitivity = Config.Bind("Aim", "Sensitivity", new Vector2(20f, 12f), new ConfigDescription("EFT Mouse Sensivity affects this value", null, new ConfigurationManagerAttributes { Order = 140 }));
+            AimingSensitivity = Config.Bind("Aim", "AimingSensitivity", new Vector2(20f, 12f), new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 130 }));
+            InvertY = Config.Bind("Aim", "InvertY", false, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 120 }));
+            AimDeadzone = Config.Bind("Aim", "AimDeadzone", 0.08f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 110 }));
+
+            Magnetism = Config.Bind("Aim Assist", "Magnetism", false, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 180 }));
+            Stickiness = Config.Bind("Aim Assist", "Stickiness", 0.3f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 170 }));
+            AutoAim = Config.Bind("Aim Assist", "AutoAim", 0.25f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 160 }));
+            StickinessSmooth = Config.Bind("Aim Assist", "StickinessSmooth", 10f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 150, IsAdvanced = true }));
+            AutoAimSmooth = Config.Bind("Aim Assist", "AutoAimSmooth", 10f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 140, IsAdvanced = true }));
+            MagnetismRadius = Config.Bind("Aim Assist", "MagnetismRadius", 0.1f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 130, IsAdvanced = true }));
+            StickinessRadius = Config.Bind("Aim Assist", "StickinessRadius", 0.2f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 120, IsAdvanced = true }));
+            AutoAimRadius = Config.Bind("Aim Assist", "AutoAimRadius", 0.5f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 110, IsAdvanced = true }));
+            Radius = Config.Bind("Aim Assist", "Radius", 5f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100, IsAdvanced = true }));
+
+            MovementDeadzone = Config.Bind("Movement", "MovementDeadzone", 0.25f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 130 }));
+            DeadzoneBuffer = Config.Bind("Movement", "DeadzoneBuffer", 0.5f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 120, IsAdvanced = true }));
+            LeanSensitivity = Config.Bind("Movement", "LeanSensitivity", 50f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100, IsAdvanced = true }));
+
+            DualsenseIcons = Config.Bind("UI", "DualsenseIcons", false, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 150 }));
+            ScrollSensitivity = Config.Bind("UI", "ScrollSensitivity", 1f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 140 }));
+            InterfaceStick = Config.Bind("UI", "InterfaceStick", ERaidPadUseStick.None, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 130 }));
+            InterfaceSkipStick = Config.Bind("UI", "InterfaceSkipStick", ERaidPadUseStick.RS, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 120 }));
+            ScrollStick = Config.Bind("UI", "ScrollStick", ERaidPadUseStick.LS, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 110 }));
+            WindowStick = Config.Bind("UI", "WindowStick", ERaidPadUseStick.LS, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100 }));
+
+            SelectColor = Config.Bind("UI Selected Box", "SelectColor", new Color(1f, 0.7659f, 0.3518f, 1), new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100 }));
+
+            BlockPosition = Config.Bind("UI Button Blocks", "BlockPosition", new Vector2(-30f, 57f), new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 150 }));
+            BlockSize = Config.Bind("UI Button Blocks", "BlockSize", new Vector2(40f, 40f), new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 140, IsAdvanced = true }));
+            BlockSpacing = Config.Bind("UI Button Blocks", "BlockSpacing", 16, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 130, IsAdvanced = true }));
+            BlockIconSpacing = Config.Bind("UI Button Blocks", "BlockIconSpacing", 8, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 120, IsAdvanced = true }));
+            PressFontSize = Config.Bind("UI Button Blocks", "PressFontSize", 20, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 110, IsAdvanced = true }));
+            HoldDoubleClickFontSize = Config.Bind("UI Button Blocks", "HoldDoubleClickFontSize", 12, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100, IsAdvanced = true }));
+
+            new RaidPadPlayerPatch().Enable();
+            new RaidPadTarkovApplicationPatch().Enable();
+            new RaidPadSSAAPatch().Enable();
+            new RaidPadInventoryScreenShowPatch().Enable();
+            new RaidPadInventoryScreenClosePatch().Enable();
+            new RaidPadActionPanelPatch().Enable();
+            new BattleStancePanelPatch().Enable();
+            // Controller UI
+            new TemplatedGridsViewShowPatch().Enable();
+            new GeneratedGridsViewShowPatch().Enable();
+            //new TradingGridViewShowPatch().Enable();
+            //new TradingGridViewTraderShowPatch().Enable();
+            //new TradingTableGridViewShowPatch().Enable();
+            new GridViewHidePatch().Enable();
+            new ContainedGridsViewClosePatch().Enable();
+            new ItemSpecificationPanelShowPatch().Enable();
+            new ItemSpecificationPanelClosePatch().Enable();
+            new EquipmentTabShowPatch().Enable();
+            new EquipmentTabHidePatch().Enable();
+            new ContainersPanelShowPatch().Enable();
+            new ContainersPanelClosePatch().Enable();
+            new SearchButtonShowPatch().Enable();
+            new SearchButtonClosePatch().Enable();
+            new ContextMenuButtonShowPatch().Enable();
+            new ContextMenuButtonClosePatch().Enable();
+            new ScrollRectNoDragOnEnable().Enable();
+            new ScrollRectNoDragOnDisable().Enable();
+
+            new ItemViewOnBeginDrag().Enable();
+            new ItemViewOnEndDrag().Enable();
+            new ItemViewUpdate().Enable();
+            new DraggedItemViewMethod_3().Enable();
+            new TooltipMethod_0().Enable();
+            new SimpleStashPanelShowPatch().Enable();
+            new SplitDialogShowPatch().Enable();
+            new SplitDialogHidePatch().Enable();
+            new SearchableSlotViewShowPatch().Enable();
+            new SearchableSlotViewHidePatch().Enable();
+
+            LeftControl = new InputGetKeyDownLeftControlPatch();
+        }
+    }
+    public class RaidPadPlayerPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(Player).GetMethod("Init", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref Player __instance)
+        {
+            if (__instance != null && __instance.IsYourPlayer)
+            {
+                RaidPadPlugin.RaidPadClassComponent.UpdateController(__instance);
+            }
+        }
+    }
+    public class RaidPadTarkovApplicationPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(TarkovApplication).GetMethod("Init", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref TarkovApplication __instance, InputTree inputTree)
+        {
+            RaidPadPlugin.RaidPadClassComponent.inputTree = inputTree;
+        }
+    }
+    public class RaidPadSSAAPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(SSAA).GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref SSAA __instance)
+        {
+            RaidPadPlugin.RaidPadClassComponent.currentSSAA = __instance;
+        }
+    }
+    public class RaidPadInventoryScreenShowPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(InventoryScreen).GetMethods(BindingFlags.Instance | BindingFlags.Public).First(x => x.Name == "Show");
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref InventoryScreen __instance)
+        {
+            RaidPadPlugin.RaidPadClassComponent.Tabs = Traverse.Create(__instance).Field("_tabDictionary").GetValue<Dictionary<EInventoryTab, Tab>>();
+            RaidPadPlugin.RaidPadClassComponent.UpdateInterfaceBinds(true);
+            RaidPadPlugin.RaidPadClassComponent.UpdateInterface(__instance);
+            AsynControllerUIMoveToClosest();
+        }
+        private static async void AsynControllerUIMoveToClosest()
+        {
+            await Task.Delay(200);
+            RaidPadPlugin.RaidPadClassComponent.ControllerUIMoveToClosest(false);
+        }
+    }
+    public class RaidPadInventoryScreenClosePatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(InventoryScreen).GetMethod("Close", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref InventoryScreen __instance)
+        {
+            RaidPadPlugin.RaidPadClassComponent.UpdateInterfaceBinds(false);
+        }
+    }
+    public class RaidPadActionPanelPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ActionPanel).GetMethod("method_0", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref ActionPanel __instance)
+        {
+            // Possible Explosion of the whole mod
+            bool Enabled = Traverse.Create(__instance).Field("bool_0").GetValue<bool>();
+            RaidPadPlugin.RaidPadClassComponent.UpdateActionPanelBinds(Enabled);
+        }
+    }
+    public class BattleStancePanelPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(BattleStancePanel).GetMethod("Show", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref BattleStancePanel __instance)
+        {
+            RaidPadPlugin.RaidPadClassComponent.speedSlider = Traverse.Create(__instance).Field("_speedSlider").GetValue<Slider>();
+        }
+    }
+    // Controller UI
+    public class TemplatedGridsViewShowPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(TemplatedGridsView).GetMethods(BindingFlags.Instance | BindingFlags.Public).First(x => x.Name == "Show");
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref TemplatedGridsView __instance)
+        {
+            if (__instance.GetComponentInParent<GridWindow>() != null)
+            {
+                if (RaidPadPlugin.RaidPadClassComponent.containedGridsViews.Contains(__instance)) return;
+                RaidPadPlugin.RaidPadClassComponent.containedGridsViews.Add(__instance);
+            }
+            else
+            {
+                foreach (GridView gridView in __instance.GridViews)
+                {
+                    if (RaidPadPlugin.RaidPadClassComponent.gridViews.Contains(gridView)) continue;
+                    RaidPadPlugin.RaidPadClassComponent.gridViews.Add(gridView);
+                }
+            }
+        }
+    }
+    public class GeneratedGridsViewShowPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(GeneratedGridsView).GetMethods(BindingFlags.Instance | BindingFlags.Public).First(x => x.Name == "Show");
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref GeneratedGridsView __instance)
+        {
+            if (__instance.GetComponentInParent<GridWindow>() != null)
+            {
+                if (RaidPadPlugin.RaidPadClassComponent.containedGridsViews.Contains(__instance)) return;
+                RaidPadPlugin.RaidPadClassComponent.containedGridsViews.Add(__instance);
+            }
+            else
+            {
+                foreach (GridView gridView in __instance.GridViews)
+                {
+                    if (RaidPadPlugin.RaidPadClassComponent.gridViews.Contains(gridView)) continue;
+                    RaidPadPlugin.RaidPadClassComponent.gridViews.Add(gridView);
+                }
+            }
+        }
+    }
+    public class TradingGridViewShowPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(TradingGridView).GetMethods().First((MethodInfo x) => x.Name == "Show" && x.GetParameters().Count() == 5);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref TradingGridView __instance)
+        {
+            if (RaidPadPlugin.RaidPadClassComponent.gridViews.Contains(__instance)) return;
+            RaidPadPlugin.RaidPadClassComponent.gridViews.Add(__instance);
+        }
+    }
+    public class TradingGridViewTraderShowPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(TradingGridView).GetMethods().First((MethodInfo x) => x.Name == "Show" && x.GetParameters().Count() == 6 && x.GetParameters()[5].Name == "raiseEvents");
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref TradingGridView __instance)
+        {
+            if (RaidPadPlugin.RaidPadClassComponent.gridViews.Contains(__instance)) return;
+            RaidPadPlugin.RaidPadClassComponent.gridViews.Add(__instance);
+        }
+    }
+    public class TradingTableGridViewShowPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(TradingTableGridView).GetMethods().First((MethodInfo x) => x.Name == "Show" && x.GetParameters().Count() == 4);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref TradingTableGridView __instance)
+        {
+            RaidPadPlugin.RaidPadClassComponent.tradingTableGridView = __instance;
+        }
+    }
+    public class ContainedGridsViewClosePatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ContainedGridsView).GetMethod("Close", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref ContainedGridsView __instance)
+        {
+            if (__instance == null) return;
+
+            if (__instance.GetComponentInParent<GridWindow>() != null)
+            {
+                RaidPadPlugin.RaidPadClassComponent.containedGridsViews.Remove(__instance);
+            }
+        }
+    }
+    public class GridViewHidePatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(GridView).GetMethod("Close", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref GridView __instance)
+        {
+            if (__instance == null) return;
+            if (RaidPadPlugin.RaidPadClassComponent.tradingTableGridView == __instance)
+            {
+                RaidPadPlugin.RaidPadClassComponent.tradingTableGridView = null;
+                return;
+            }
+            if (!RaidPadPlugin.RaidPadClassComponent.gridViews.Contains(__instance)) return;
+            RaidPadPlugin.RaidPadClassComponent.gridViews.Remove(__instance);
+        }
+    }
+    public class EquipmentTabShowPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(EquipmentTab).GetMethod("Show", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref EquipmentTab __instance, InventoryController inventoryController)
+        {
+            if (__instance.gameObject.name == "Gear Panel")
+            {
+                foreach (KeyValuePair<EquipmentSlot, SlotView> slotView in Traverse.Create(__instance).Field("_slotViews").GetValue<Dictionary<EquipmentSlot, SlotView>>())
+                {
+                    if (slotView.Key == EquipmentSlot.FirstPrimaryWeapon || slotView.Key == EquipmentSlot.SecondPrimaryWeapon)
+                    {
+                        RaidPadPlugin.RaidPadClassComponent.weaponsSlotViews.Add(slotView.Value);
+                    }
+                    else if (slotView.Key == EquipmentSlot.ArmBand)
+                    {
+                        RaidPadPlugin.RaidPadClassComponent.armbandSlotView = slotView.Value;
+                    }
+                    else
+                    {
+                        RaidPadPlugin.RaidPadClassComponent.equipmentSlotViews.Add(slotView.Value);
+                    }
+                }
+            }
+            else
+            {
+                foreach (KeyValuePair<EquipmentSlot, SlotView> slotView in Traverse.Create(__instance).Field("_slotViews").GetValue<Dictionary<EquipmentSlot, SlotView>>())
+                {
+                    if (slotView.Key == EquipmentSlot.FirstPrimaryWeapon || slotView.Key == EquipmentSlot.SecondPrimaryWeapon)
+                    {
+                        RaidPadPlugin.RaidPadClassComponent.lootWeaponsSlotViews.Add(slotView.Value);
+                    }
+                    else if (slotView.Key == EquipmentSlot.ArmBand)
+                    {
+                        if (slotView.Value.Slot != null) RaidPadPlugin.RaidPadClassComponent.lootArmbandSlotView = slotView.Value;
+                    }
+                    else
+                    {
+                        RaidPadPlugin.RaidPadClassComponent.lootEquipmentSlotViews.Add(slotView.Value);
+                    }
+                }
+            }
+        }
+    }
+    public class EquipmentTabHidePatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(EquipmentTab).GetMethod("Hide", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref EquipmentTab __instance)
+        {
+            if (__instance.gameObject.name == "Gear Panel")
+            {
+                RaidPadPlugin.RaidPadClassComponent.equipmentSlotViews.Clear();
+                RaidPadPlugin.RaidPadClassComponent.weaponsSlotViews.Clear();
+                RaidPadPlugin.RaidPadClassComponent.armbandSlotView = null;
+            }
+            else
+            {
+                RaidPadPlugin.RaidPadClassComponent.lootEquipmentSlotViews.Clear();
+                RaidPadPlugin.RaidPadClassComponent.lootWeaponsSlotViews.Clear();
+                RaidPadPlugin.RaidPadClassComponent.lootArmbandSlotView = null;
+            }
+        }
+    }
+    public class ContainersPanelShowPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ContainersPanel).GetMethod("Show", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref ContainersPanel __instance)
+        {
+            if (__instance.transform.parent.gameObject.name == "Scrollview Parent")
+            {
+                foreach (KeyValuePair<EquipmentSlot, SlotView> slotView in Traverse.Create(__instance).Field("dictionary_0").GetValue<Dictionary<EquipmentSlot, SlotView>>())
+                {
+                    if (slotView.Key != EquipmentSlot.Pockets)
+                    {
+                        RaidPadPlugin.RaidPadClassComponent.containersSlotViews.Add(slotView.Value);
+                    }
+                }
+            }
+            else
+            {
+                foreach (KeyValuePair<EquipmentSlot, SlotView> slotView in Traverse.Create(__instance).Field("dictionary_0").GetValue<Dictionary<EquipmentSlot, SlotView>>())
+                {
+                    if (slotView.Key != EquipmentSlot.Pockets) RaidPadPlugin.RaidPadClassComponent.lootContainersSlotViews.Add(slotView.Value);
+                }
+                SlotView dogtagSlotView = Traverse.Create(__instance).Field("slotView_0").GetValue<SlotView>();
+                if (dogtagSlotView != null && dogtagSlotView.gameObject.activeSelf)
+                {
+                    RaidPadPlugin.RaidPadClassComponent.dogtagSlotView = dogtagSlotView;
+                }
+            }
+        }
+    }
+    public class ContainersPanelClosePatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ContainersPanel).GetMethod("Close", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref ContainersPanel __instance)
+        {
+            if (__instance.transform.parent.gameObject.name == "Scrollview Parent")
+            {
+                RaidPadPlugin.RaidPadClassComponent.containersSlotViews.Clear();
+                RaidPadPlugin.RaidPadClassComponent.specialSlotSlotViews.Clear();
+            }
+            else
+            {
+                RaidPadPlugin.RaidPadClassComponent.lootContainersSlotViews.Clear();
+            }
+        }
+    }
+
+    public class ItemSpecificationPanelShowPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ItemSpecificationPanel).GetMethod("Show", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref ItemSpecificationPanel __instance)
+        {
+            if (RaidPadPlugin.RaidPadClassComponent.itemSpecificationPanels.Contains(__instance)) return;
+            RaidPadPlugin.RaidPadClassComponent.itemSpecificationPanels.Add(__instance);
+        }
+    }
+    public class ItemSpecificationPanelClosePatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ItemSpecificationPanel).GetMethod("Close", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref ItemSpecificationPanel __instance)
+        {
+            if (__instance == null) return;
+            RaidPadPlugin.RaidPadClassComponent.itemSpecificationPanels.Remove(__instance);
+        }
+    }
+    public class SearchButtonShowPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(SearchButton).GetMethod("SetEnabled", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref SearchButton __instance, bool value)
+        {
+            AddAsync(__instance);
+        }
+        private async static void AddAsync(SearchButton instance)
+        {
+            await Task.Delay(100);
+            if (instance.gameObject.activeSelf)
+            {
+                if (RaidPadPlugin.RaidPadClassComponent.searchButtons.Contains(instance)) return;
+                RaidPadPlugin.RaidPadClassComponent.searchButtons.Add(instance);
+            }
+            else
+            {
+                if (!RaidPadPlugin.RaidPadClassComponent.searchButtons.Contains(instance)) return;
+                RaidPadPlugin.RaidPadClassComponent.searchButtons.Remove(instance);
+            }
+        }
+    }
+    public class SearchButtonClosePatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(SearchButton).GetMethod("Close", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref SearchButton __instance)
+        {
+            if (!RaidPadPlugin.RaidPadClassComponent.searchButtons.Contains(__instance)) return;
+            RaidPadPlugin.RaidPadClassComponent.searchButtons.Remove(__instance);
+        }
+    }
+    public class ItemViewOnBeginDrag : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ItemView).GetMethod("OnBeginDrag", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPrefix]
+        private static void PatchPreFix(ref ItemView __instance, PointerEventData eventData)
+        {
+            if (RaidPadPlugin.RaidPadClassComponent.Dragging && RaidPadPlugin.RaidPadClassComponent.InRaid)
+            {
+                RaidPadPlugin.RaidPadClassComponent.ControllerCancelDrag();
+            }
+        }
+    }
+    public class ItemViewOnEndDrag : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ItemView).GetMethod("OnEndDrag", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref ItemView __instance, PointerEventData eventData)
+        {
+            if (RaidPadPlugin.RaidPadClassComponent.Dragging && RaidPadPlugin.RaidPadClassComponent.InRaid)
+            {
+                RaidPadPlugin.RaidPadClassComponent.ControllerCancelDrag();
+            }
+        }
+    }
+    public class ItemViewUpdate : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ItemView).GetMethod("Update", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPrefix]
+        private static bool PatchPreFix(ref ItemView __instance)
+        {
+            if (!RaidPadPlugin.RaidPadClassComponent.InRaid) return true;
+            return (!RaidPadPlugin.RaidPadClassComponent.Dragging);
+        }
+    }
+    public class DraggedItemViewMethod_3 : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(DraggedItemView).GetMethod("method_3", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPrefix]
+        private static bool PatchPreFix(ref DraggedItemView __instance)
+        {
+            if (RaidPadPlugin.RaidPadClassComponent.Dragging && RaidPadPlugin.RaidPadClassComponent.InRaid)
+            {
+                RectTransform RectTransform_0 = Traverse.Create(__instance).Property("RectTransform_0").GetValue<RectTransform>();
+                RectTransform_0.position = RaidPadPlugin.RaidPadClassComponent.globalPosition;
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+    }
+    public class TooltipMethod_0 : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(Tooltip).GetMethod("method_0", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPrefix]
+        private static void PatchPreFix(ref ItemView __instance, ref Vector2 position)
+        {
+            if (RaidPadPlugin.RaidPadClassComponent.connected && RaidPadPlugin.RaidPadClassComponent.InRaid) position = RaidPadPlugin.RaidPadClassComponent.globalPosition + new Vector2(32f,-19f);
+        }
+    }
+    public class ScrollRectNoDragOnEnable : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ScrollRectNoDrag).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref ScrollRectNoDrag __instance)
+        {
+            if (!RaidPadPlugin.RaidPadClassComponent.scrollRectNoDrags.Contains(__instance))
+            {
+                if (RaidPadPlugin.RaidPadClassComponent.scrollRectNoDrags.Count == 0)
+                {
+                    RectTransform rectTransform;
+                    rectTransform = __instance.GetComponent<RectTransform>();
+                    RaidPadPlugin.RaidPadClassComponent.currentScrollRectNoDrag = __instance;
+                    RaidPadPlugin.RaidPadClassComponent.currentScrollRectNoDragRectTransform = rectTransform;
+                }
+                RaidPadPlugin.RaidPadClassComponent.scrollRectNoDrags.Add(__instance);
+            }
+        }
+    }
+    public class ScrollRectNoDragOnDisable : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ScrollRectNoDrag).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref ScrollRectNoDrag __instance)
+        {
+            RaidPadPlugin.RaidPadClassComponent.scrollRectNoDrags.Remove(__instance);
+        }
+    }
+    public class SimpleStashPanelShowPatch : ModulePatch
+    {
+        public static bool Searching = false;
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(SimpleStashPanel).GetMethod("Show", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref SimpleStashPanel __instance)
+        {
+            //if (!Searching && RaidPadPlugin.RaidPadClassComponent.InRaid) ShowAsync(__instance);
+        }
+        private async static void ShowAsync(SimpleStashPanel instance)
+        {
+            Searching = true;
+            await Task.Delay(100);
+            SearchableItemView searchableItemView = Traverse.Create(instance).Field("_simplePanel").GetValue<SearchableItemView>();
+            if (searchableItemView != null)
+            {
+                GeneratedGridsView generatedGridsView = Traverse.Create(searchableItemView).Field("containedGridsView_0").GetValue<GeneratedGridsView>();
+                if (generatedGridsView != null)
+                {
+                    if (generatedGridsView.GridViews.Count() == 0)
+                    {
+                        ShowAsync(instance);
+                        return;
+                    }
+                    GridView gridView = generatedGridsView.GridViews[0];
+                    if (gridView != null)
+                    {
+                        Searching = false;
+                        RaidPadPlugin.RaidPadClassComponent.SimpleStashGridView = gridView;
+                        RaidPadPlugin.RaidPadClassComponent.ControllerUISelect(gridView);
+                    }
+                }
+            }
+            Searching = false;
+        }
+    }
+    public class ContextMenuButtonShowPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ContextMenuButton).GetMethod("Show", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref ContextMenuButton __instance)
+        {
+            if (RaidPadPlugin.RaidPadClassComponent.contextMenuButtons.Contains(__instance)) return;
+            SimpleContextMenu simpleContextMenu;
+            if (!__instance.transform.parent.parent.TryGetComponent<SimpleContextMenu>(out simpleContextMenu)) return;
+            RaidPadPlugin.RaidPadClassComponent.contextMenuButtons.Add(__instance);
+            if (!RaidPadPlugin.RaidPadClassComponent.ContextMenu)
+            {
+                RaidPadPlugin.RaidPadClassComponent.UpdateContextMenuBinds(true);
+                if (RaidPadPlugin.RaidPadClassComponent.InRaid) RaidPadPlugin.RaidPadClassComponent.ControllerUISelect(__instance);
+            }
+        }
+    }
+    public class ContextMenuButtonClosePatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ContextMenuButton).GetMethod("Close", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref ContextMenuButton __instance)
+        {
+            if (__instance == null)
+            {
+                goto Skip;
+            }
+            RaidPadPlugin.RaidPadClassComponent.contextMenuButtons.Remove(__instance);
+            Skip:
+            if (RaidPadPlugin.RaidPadClassComponent.contextMenuButtons.Count == 0)
+            {
+                RaidPadPlugin.RaidPadClassComponent.UpdateContextMenuBinds(false);
+            }
+        }
+    }
+    public class SplitDialogShowPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(SplitDialog).GetMethods().First(x => x.Name == "Show" && x.GetParameters().Count() > 7);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref SplitDialog __instance)
+        {
+            RaidPadPlugin.RaidPadClassComponent.splitDialog = __instance;
+            RaidPadPlugin.RaidPadClassComponent.UpdateSplitDialogBinds(true);
+        }
+    }
+    public class SplitDialogHidePatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(SplitDialog).GetMethod("Hide", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref SplitDialog __instance)
+        {
+            RaidPadPlugin.RaidPadClassComponent.splitDialog = null;
+            RaidPadPlugin.RaidPadClassComponent.UpdateSplitDialogBinds(false);
+        }
+    }
+    public class SearchableSlotViewShowPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(SearchableSlotView).GetMethod("Show", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref SearchableSlotView __instance)
+        {
+            if (__instance.Slot != null && __instance.Slot.IsSpecial)
+            {
+                RaidPadPlugin.RaidPadClassComponent.specialSlotSlotViews.Add(__instance);
+            }
+        }
+    }
+    public class SearchableSlotViewHidePatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(SearchableSlotView).GetMethod("Close", BindingFlags.Instance | BindingFlags.Public);
+        }
+        [PatchPostfix]
+        private static void PatchPostFix(ref SearchableSlotView __instance)
+        {
+            if (__instance == null) return;
+            if (__instance.Slot != null && __instance.Slot.IsSpecial)
+            {
+                RaidPadPlugin.RaidPadClassComponent.specialSlotSlotViews.Remove(__instance);
+            }
+
+        }
+    }
+    public class InputGetKeyDownLeftControlPatch : ModulePatch
+    {
+        MethodInfo methodInfo;
+        public InputGetKeyDownLeftControlPatch()
+        {
+            methodInfo = typeof(Input).GetMethods().First(x => x.Name == "GetKey" && x.GetParamsNames().Contains("key"));
+        }
+        protected override MethodBase GetTargetMethod()
+        {
+            return methodInfo;
+        }
+        [PatchPrefix]
+        private static bool PatchPreFix(ref bool __result, KeyCode key)
+        {
+            switch (key)
+            {
+                case KeyCode.LeftControl:
+                    __result = true;
+                    return false;
+            }
+            return true;
+        }
+    }
+}
