@@ -1,5 +1,6 @@
 ﻿using SPT.Reflection.Patching;
 using BepInEx;
+using BepInEx.Bootstrap;
 using System.Reflection;
 using UnityEngine;
 using EFT.UI;
@@ -18,7 +19,9 @@ using UnityEngine.EventSystems;
 
 namespace RaidPad
 {
-    [BepInPlugin("com.thablackunicorn.raidpad", "RaidPad", "0.4.0")]
+    [BepInPlugin("com.thablackunicorn.raidpad", "RaidPad", PluginInfo.Version)]
+    // Targets a minimum of SPT 4.1.x
+    [BepInDependency("com.SPT.core", "4.1.0")]
     public class RaidPadPlugin : BaseUnityPlugin
     {
         public static GameObject Hook;
@@ -82,6 +85,14 @@ namespace RaidPad
 
         private void Awake()
         {
+            var sptVersion = Chainloader.PluginInfos["com.SPT.core"].Metadata.Version;
+            if (sptVersion.Major > 4 || (sptVersion.Major == 4 && sptVersion.Minor > 1))
+            {
+                Logger.LogError($"RaidPad requires SPT 4.1.x — found {sptVersion}. Mod will not load.");
+                enabled = false;
+                return;
+            }
+
             // Host the controller component on the plugin's own (BepInEx-managed, persistent)
             // GameObject. A separately-created GameObject was being destroyed before Unity
             // could run its Start()/Update(), which killed the input loop on SPT 4.0.x.
@@ -169,8 +180,8 @@ namespace RaidPad
             new ItemViewOnBeginDrag().Enable();
             new ItemViewOnEndDrag().Enable();
             new ItemViewUpdate().Enable();
-            new DraggedItemViewMethod_3().Enable();
-            new TooltipMethod_0().Enable();
+            new DraggedItemViewSetInCenter().Enable();
+            new TooltipMethodSetPosition().Enable();
             new SimpleStashPanelShowPatch().Enable();
             new SplitDialogShowPatch().Enable();
             new SplitDialogHidePatch().Enable();
@@ -255,7 +266,7 @@ namespace RaidPad
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(ActionPanel).GetMethod("method_0", BindingFlags.Instance | BindingFlags.Public);
+            return typeof(ActionPanel).GetMethod("AvailableInteractionStateChangedHandler", BindingFlags.Instance | BindingFlags.Public);
         }
         [PatchPostfix]
         private static void PatchPostFix(ref ActionPanel __instance)
@@ -632,19 +643,19 @@ namespace RaidPad
             return (!RaidPadPlugin.RaidPadClassComponent.Dragging);
         }
     }
-    public class DraggedItemViewMethod_3 : ModulePatch
+    public class DraggedItemViewSetInCenter : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(DraggedItemView).GetMethod("method_3", BindingFlags.Instance | BindingFlags.Public);
+            return typeof(DraggedItemView).GetMethod("SetInCenter", BindingFlags.Instance | BindingFlags.Public);
         }
         [PatchPrefix]
         private static bool PatchPreFix(ref DraggedItemView __instance)
         {
             if (RaidPadPlugin.RaidPadClassComponent.Dragging && RaidPadPlugin.RaidPadClassComponent.InRaid)
             {
-                RectTransform RectTransform_0 = Traverse.Create(__instance).Property("RectTransform_0").GetValue<RectTransform>();
-                RectTransform_0.position = RaidPadPlugin.RaidPadClassComponent.globalPosition;
+                RectTransform rectTransform = Traverse.Create(__instance).Property("RectTransform").GetValue<RectTransform>();
+                rectTransform.position = RaidPadPlugin.RaidPadClassComponent.globalPosition;
                 return false;
             }
             else
@@ -653,11 +664,11 @@ namespace RaidPad
             }
         }
     }
-    public class TooltipMethod_0 : ModulePatch
+    public class TooltipMethodSetPosition : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(Tooltip).GetMethod("method_0", BindingFlags.Instance | BindingFlags.Public);
+            return typeof(Tooltip).GetMethod("SetPosition", BindingFlags.Instance | BindingFlags.Public);
         }
         [PatchPrefix]
         private static void PatchPreFix(ref ItemView __instance, ref Vector2 position)

@@ -274,10 +274,10 @@ namespace RaidPad
         private MethodInfo CanExecute;
         private MethodInfo RunNetworkTransaction;
         private MethodInfo CalculateRotatedSize;
-        private MethodInfo DraggedItemViewMethod_2;
+        private MethodInfo DraggedItemViewMethodRotateItem;
 
-        private MethodInfo ItemUIContextMethod_1;
-        private object[] ItemUIContextMethod_1InvokeParameters = new object[2] { typeof(Item), EBoundItem.Item4 };
+        private MethodInfo ItemUIContextDialogWindowContext;
+        private object[] ItemUIContextInvokeParameters = new object[2] { typeof(Item), EBoundItem.Item4 };
 
         private MethodInfo ShowContextMenu;
         private object[] ShowContextMenuInvokeParameters = new object[1] { Vector2.zero };
@@ -302,6 +302,7 @@ namespace RaidPad
 
         public void OnGUI()
         {
+            // TODO: delete the unreachable code
             return;
             GUILayout.BeginArea(new Rect(20, 10, 1280, 720));
 
@@ -566,26 +567,27 @@ namespace RaidPad
         }
         public void Start()
         {
-            ItemUIContextMethod_1 = typeof(ItemUiContext).GetMethod("method_1", BindingFlags.Instance | BindingFlags.Public);
+            // Note: method appears to still be called method_1 in spt-4.1
+            ItemUIContextDialogWindowContext = typeof(ItemUiContext).GetMethod("method_1", BindingFlags.Instance | BindingFlags.Public);
             TranslateInput = typeof(InputTree).GetMethod("TranslateInput", BindingFlags.Instance | BindingFlags.Public);
             ButtonPress = typeof(Button).GetMethod("Press", BindingFlags.Instance | BindingFlags.NonPublic);
             ExecuteMiddleClick = typeof(ItemView).GetMethod("ExecuteMiddleClick", BindingFlags.Instance | BindingFlags.Public);
             QuickFindAppropriatePlace = typeof(ItemUiContext).GetMethod("QuickFindAppropriatePlace", BindingFlags.Instance | BindingFlags.Public);
-            CanExecute = typeof(TraderControllerClass).GetMethod("CanExecute", BindingFlags.Instance | BindingFlags.Public);
-            RunNetworkTransaction = typeof(TraderControllerClass).GetMethod("RunNetworkTransaction", BindingFlags.Instance | BindingFlags.Public);
+            CanExecute = typeof(ItemController).GetMethod("CanExecute", BindingFlags.Instance | BindingFlags.Public, null, new Type[] { typeof(IOperationResult) }, null);
+            RunNetworkTransaction = typeof(ItemController).GetMethod("RunNetworkTransaction", BindingFlags.Instance | BindingFlags.Public);
             ShowContextMenu = typeof(ItemView).GetMethod("ShowContextMenu", BindingFlags.Instance | BindingFlags.Public);
             CalculateRotatedSize = typeof(Item).GetMethod("CalculateRotatedSize", BindingFlags.Instance | BindingFlags.Public);
-            DraggedItemViewMethod_2 = typeof(DraggedItemView).GetMethod("method_2", BindingFlags.Instance | BindingFlags.Public);
+            DraggedItemViewMethodRotateItem = typeof(DraggedItemView).GetMethod("RotateItem", BindingFlags.Instance | BindingFlags.Public);
 
             onRaidPadButtonState += ControllerButtonStateMethod;
 
-            if (!File.Exists((AppDomain.CurrentDomain.BaseDirectory + "/BepInEx/plugins/RaidPad/Default.json")))
+            if (!File.Exists((AppDomain.CurrentDomain.BaseDirectory + "/BepInEx/plugins/RaidPad/assets/Default.json")))
             {
                 DefaultJSON();
             }
-            if (File.Exists((AppDomain.CurrentDomain.BaseDirectory + "/BepInEx/plugins/RaidPad/Default.json")))
+            if (File.Exists((AppDomain.CurrentDomain.BaseDirectory + "/BepInEx/plugins/RaidPad/assets/Default.json")))
             {
-                controllerPresetJsonClass = ReadFromJsonFile<ControllerPresetJsonClass>((AppDomain.CurrentDomain.BaseDirectory + "/BepInEx/plugins/RaidPad/Default.json"));
+                controllerPresetJsonClass = ReadFromJsonFile<ControllerPresetJsonClass>((AppDomain.CurrentDomain.BaseDirectory + "/BepInEx/plugins/RaidPad/assets/Default.json"));
             }
 
             AimAnimationCurve.keys = AimKeys;
@@ -1748,7 +1750,7 @@ namespace RaidPad
             controllerPresetJsonClass.RaidPadButtonBinds = RaidPadButtonBinds;
             controllerPresetJsonClass.RaidPadSets = RaidPadSets;
 
-            WriteToJsonFile<ControllerPresetJsonClass>((AppDomain.CurrentDomain.BaseDirectory + "/BepInEx/plugins/RaidPad/Default.json"), controllerPresetJsonClass, false);
+            WriteToJsonFile<ControllerPresetJsonClass>((AppDomain.CurrentDomain.BaseDirectory + "/BepInEx/plugins/RaidPad/assets/Default.json"), controllerPresetJsonClass, false);
         }
         public void UpdateInterfaceBinds(bool Enabled)
         {
@@ -4586,11 +4588,11 @@ namespace RaidPad
                     }
                 }
                 if (!onPointerEnterItemView.IsSearched && ExecuteMiddleClick != null && (bool)ExecuteMiddleClick.Invoke(onPointerEnterItemView, null)) return;
-                if (ItemUiContext == null || !onPointerEnterItemView.IsSearched) return;
-                TraderControllerClass ItemController = Traverse.Create(onPointerEnterItemView).Field("ItemController").GetValue<TraderControllerClass>();
+                if (!ItemUiContext || !onPointerEnterItemView.IsSearched) return;
+                ItemController itemController = Traverse.Create(onPointerEnterItemView).Field("ItemController").GetValue<ItemController>();
                 if (ExecuteInteraction != null && IsInteractionAvailable != null)
                 {
-                    if (onPointerEnterItemView.Item is FoodDrinkItemClass || onPointerEnterItemView.Item is MedsItemClass)
+                    if (onPointerEnterItemView.Item is FoodDrink || onPointerEnterItemView.Item is Meds)
                     {
                         ExecuteInteractionInvokeParameters[0] = EItemInfoButton.Use;
                         if (!(bool)ExecuteInteraction.Invoke(NewContextInteractionsObject, ExecuteInteractionInvokeParameters))
@@ -4624,7 +4626,7 @@ namespace RaidPad
                         bool IsBeingUnloadedMagazine = Traverse.Create(Traverse.Create(onPointerEnterItemView).Property("IsBeingUnloadedMagazine").GetValue<object>()).Field("gparam_0").GetValue<bool>();
                         if (IsBeingLoadedMagazine || IsBeingUnloadedMagazine)
                         {
-                            ItemController.StopProcesses();
+                            itemController.StopProcesses();
                             return;
                         }
                     }
@@ -4645,7 +4647,7 @@ namespace RaidPad
                 pointerEventData.position = globalPosition;
                 ItemUiContext ItemUiContext = ItemUiContext.Instance;
                 if (ItemUiContext == null || !onPointerEnterItemView.IsSearched) return;
-                TraderControllerClass ItemController = Traverse.Create(onPointerEnterItemView).Field("ItemController").GetValue<TraderControllerClass>();
+                ItemController ItemController = Traverse.Create(onPointerEnterItemView).Field("ItemController").GetValue<ItemController>();
                 SimpleTooltip tooltip = ItemUiContext.Tooltip;
                 object ItemContext = Traverse.Create(onPointerEnterItemView).Property("ItemContext").GetValue<object>();
                 if (ItemContext != null)
@@ -4665,7 +4667,7 @@ namespace RaidPad
                             bool ItemsDestroyRequired = Traverse.Create(Value).Property("ItemsDestroyRequired").GetValue<bool>();
                             if (ItemsDestroyRequired)
                             {
-                                NotificationManagerClass.DisplayWarningNotification("DiscardLimit", ENotificationDurationType.Default);
+                                NotificationManager.DisplayWarningNotification("DiscardLimit", ENotificationDurationType.Default);
                                 return;
                             }
                             string itemSound = onPointerEnterItemView.Item.ItemSound;
@@ -4726,7 +4728,7 @@ namespace RaidPad
             }
             if (!Dragging && pointerEventData != null && onPointerEnterItemView != null && onPointerEnterItemView.gameObject.activeSelf)
             {
-                TraderControllerClass ItemController = Traverse.Create(onPointerEnterItemView).Field("ItemController").GetValue<TraderControllerClass>();
+                ItemController ItemController = Traverse.Create(onPointerEnterItemView).Field("ItemController").GetValue<ItemController>();
                 if (ItemController != null)
                 {
                     bool IsBeingLoadedMagazine = Traverse.Create(Traverse.Create(onPointerEnterItemView).Property("IsBeingLoadedMagazine").GetValue<object>()).Field("gparam_0").GetValue<bool>();
@@ -4817,7 +4819,7 @@ namespace RaidPad
                     if (ItemContext != null)
                     {
                         ItemRotation ItemRotation = Traverse.Create(ItemContext).Field("ItemRotation").GetValue<ItemRotation>();
-                        DraggedItemViewMethod_2.Invoke(DraggedItemView, new object[1] { (ItemRotation == ItemRotation.Horizontal ? ItemRotation.Vertical : ItemRotation.Horizontal) });
+                        DraggedItemViewMethodRotateItem.Invoke(DraggedItemView, new object[1] { (ItemRotation == ItemRotation.Horizontal ? ItemRotation.Vertical : ItemRotation.Horizontal) });
                         ControllerOnDrag();
                     }
                 }
@@ -4894,12 +4896,12 @@ namespace RaidPad
             if (pointerEventData != null && onPointerEnterItemView != null && onPointerEnterItemView.gameObject.activeSelf)
             {
                 pointerEventData.position = globalPosition;
-                ItemUiContext ItemUiContext = ItemUiContext.Instance;
-                if (ItemUiContext != null && onPointerEnterItemView.Item != null && ItemUIContextMethod_1 != null)
+                ItemUiContext itemUiContext = ItemUiContext.Instance;
+                if (itemUiContext && onPointerEnterItemView.Item != null && ItemUIContextDialogWindowContext != null)
                 {
-                    ItemUIContextMethod_1InvokeParameters[0] = onPointerEnterItemView.Item;
-                    ItemUIContextMethod_1InvokeParameters[1] = bindIndex;
-                    ItemUIContextMethod_1.Invoke(ItemUiContext, ItemUIContextMethod_1InvokeParameters);
+                    ItemUIContextInvokeParameters[0] = onPointerEnterItemView.Item;
+                    ItemUIContextInvokeParameters[1] = bindIndex;
+                    ItemUIContextDialogWindowContext.Invoke(itemUiContext, ItemUIContextInvokeParameters);
                 }
             }
         }
@@ -5200,17 +5202,17 @@ namespace RaidPad
                     if (((IResult)IsInteractionAvailable.Invoke(NewContextInteractionsObject, IsInteractionAvailableInvokeParameters)).Succeed) return "Examine";
                 }
                 if (ItemUiContext == null || !onPointerEnterItemView.IsSearched) return "";
-                TraderControllerClass ItemController = Traverse.Create(onPointerEnterItemView).Field("ItemController").GetValue<TraderControllerClass>();
+                ItemController ItemController = Traverse.Create(onPointerEnterItemView).Field("ItemController").GetValue<ItemController>();
                 if (onPointerEnterItemView.Item != null && ExecuteInteraction != null && IsInteractionAvailable != null && !Hold)
                 {
-                    if (onPointerEnterItemView.Item is FoodDrinkItemClass)
+                    if (onPointerEnterItemView.Item is FoodDrink)
                     {
                         IsInteractionAvailableInvokeParameters[0] = EItemInfoButton.Use;
                         if (((IResult)IsInteractionAvailable.Invoke(NewContextInteractionsObject, IsInteractionAvailableInvokeParameters)).Succeed) return "Consume";
                         IsInteractionAvailableInvokeParameters[0] = EItemInfoButton.UseAll;
                         if (((IResult)IsInteractionAvailable.Invoke(NewContextInteractionsObject, IsInteractionAvailableInvokeParameters)).Succeed) return "Consume";
                     }
-                    if (onPointerEnterItemView.Item is MedsItemClass)
+                    if (onPointerEnterItemView.Item is Meds)
                     {
                         IsInteractionAvailableInvokeParameters[0] = EItemInfoButton.Use;
                         if (((IResult)IsInteractionAvailable.Invoke(NewContextInteractionsObject, IsInteractionAvailableInvokeParameters)).Succeed) return "Use";
@@ -5359,12 +5361,12 @@ namespace RaidPad
         }
         public static void ReloadFiles()
         {
-            string[] Files = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory + "/BepInEx/plugins/RaidPad/images/", "*.png");
+            string[] Files = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory + "/BepInEx/plugins/RaidPad/assets/images/", "*.png");
             foreach (string File in Files)
             {
                 LoadSprite(File);
             }
-            string[] AudioFiles = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory + "/BepInEx/plugins/RaidPad/sounds/");
+            string[] AudioFiles = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory + "/BepInEx/plugins/RaidPad/assets/sounds/");
             foreach (string File in AudioFiles)
             {
                 LoadAudioClip(File);

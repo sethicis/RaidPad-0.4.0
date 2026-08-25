@@ -1,0 +1,13 @@
+# ignore standard AI files
+CLAUDE.md
+AGENTS.md
+.github/instructions
+.github/prompts
+.claude
+
+## IDE specific files that aren't needed
+.idea
+RaidPad/bin
+RaidPad/obj
+RaidPad/PluginInfo.g.cs
+RaidPad.sln.DotSettings.user

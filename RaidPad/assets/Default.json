@@ -1,0 +1,1720 @@
+{
+  "RaidPadButtonBinds": {
+    "LT": [
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "ToggleAlternativeShooting",
+            "RaidPadSet": ""
+          },
+          {
+            "Command": "InputTree",
+            "InputTree": "EndSprinting",
+            "RaidPadSet": ""
+          },
+          {
+            "Command": "InputTree",
+            "InputTree": "TryLowThrow",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Press",
+        "Priority": -1
+      },
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "FinishLowThrow",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Release",
+        "Priority": -1
+      }
+    ],
+    "RT": [
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "ToggleShooting",
+            "RaidPadSet": ""
+          },
+          {
+            "Command": "InputTree",
+            "InputTree": "EndSprinting",
+            "RaidPadSet": ""
+          },
+          {
+            "Command": "InputTree",
+            "InputTree": "TryHighThrow",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Press",
+        "Priority": -1
+      },
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "EndShooting",
+            "RaidPadSet": ""
+          },
+          {
+            "Command": "InputTree",
+            "InputTree": "FinishHighThrow",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Release",
+        "Priority": -1
+      }
+    ],
+    "A": [
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "Jump",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Press",
+        "Priority": -1
+      }
+    ],
+    "B": [
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "ToggleDuck",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Press",
+        "Priority": -1
+      },
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "ToggleProne",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Hold",
+        "Priority": -1
+      }
+    ],
+    "X": [
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "ReloadWeapon",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Press",
+        "Priority": -1
+      },
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "CheckAmmo",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Hold",
+        "Priority": -1
+      },
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "QuickReloadWeapon",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "DoubleClick",
+        "Priority": -1
+      }
+    ],
+    "Y": [
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "QuickSelectWeapon",
+            "InputTree": "None",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Press",
+        "Priority": -1
+      },
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "ExamineWeapon",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Hold",
+        "Priority": -1
+      }
+    ],
+    "LS": [
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "ToggleSprinting",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Press",
+        "Priority": -1
+      }
+    ],
+    "RS": [
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "QuickKnifeKick",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Press",
+        "Priority": -1
+      },
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "SelectKnife",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Hold",
+        "Priority": -1
+      }
+    ],
+    "UP": [
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "NextTacticalDevice",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Press",
+        "Priority": -1
+      },
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "ToggleTacticalDevice",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Hold",
+        "Priority": -1
+      }
+    ],
+    "DOWN": [
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "ChangeWeaponMode",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Press",
+        "Priority": -1
+      },
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "CheckFireMode",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Hold",
+        "Priority": -1
+      },
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "ForceAutoWeaponMode",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "DoubleClick",
+        "Priority": -1
+      }
+    ],
+    "LEFT": [
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "ChangeScopeMagnification",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Press",
+        "Priority": -1
+      },
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "ChangeScope",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Hold",
+        "Priority": -1
+      }
+    ],
+    "RIGHT": [
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "ChangeScope",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Press",
+        "Priority": -1
+      }
+    ],
+    "BACK": [
+      {
+        "RaidPadCommands": [
+          {
+            "Command": "InputTree",
+            "InputTree": "ToggleInventory",
+            "RaidPadSet": ""
+          }
+        ],
+        "PressType": "Press",
+        "Priority": -1
+      }
+    ]
+  },
+  "RaidPadSets": {
+    "LB": {
+      "UP": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "PressThrowGrenade",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 2
+        }
+      ],
+      "DOWN": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "SelectSecondaryWeapon",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 2
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "SelectSecondaryWeapon",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "DoubleClick",
+          "Priority": 2
+        }
+      ],
+      "LEFT": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "SelectSecondPrimaryWeapon",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 2
+        }
+      ],
+      "RIGHT": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "SelectFirstPrimaryWeapon",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 2
+        }
+      ],
+      "A": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "PressSlot4",
+              "RaidPadSet": ""
+            },
+            {
+              "Command": "EnableSet",
+              "InputTree": "None",
+              "RaidPadSet": "HealingLimbSelector"
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 2
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "SelectFastSlot4",
+              "RaidPadSet": ""
+            },
+            {
+              "Command": "DisableSet",
+              "InputTree": "None",
+              "RaidPadSet": "HealingLimbSelector"
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 2
+        }
+      ],
+      "B": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "PressSlot5",
+              "RaidPadSet": ""
+            },
+            {
+              "Command": "EnableSet",
+              "InputTree": "None",
+              "RaidPadSet": "HealingLimbSelector"
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 2
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "SelectFastSlot5",
+              "RaidPadSet": ""
+            },
+            {
+              "Command": "DisableSet",
+              "InputTree": "None",
+              "RaidPadSet": "HealingLimbSelector"
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 2
+        }
+      ],
+      "X": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "PressSlot6",
+              "RaidPadSet": ""
+            },
+            {
+              "Command": "EnableSet",
+              "InputTree": "None",
+              "RaidPadSet": "HealingLimbSelector"
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 2
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "SelectFastSlot6",
+              "RaidPadSet": ""
+            },
+            {
+              "Command": "DisableSet",
+              "InputTree": "None",
+              "RaidPadSet": "HealingLimbSelector"
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 2
+        }
+      ],
+      "Y": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "PressSlot7",
+              "RaidPadSet": ""
+            },
+            {
+              "Command": "EnableSet",
+              "InputTree": "None",
+              "RaidPadSet": "HealingLimbSelector"
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 2
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "SelectFastSlot7",
+              "RaidPadSet": ""
+            },
+            {
+              "Command": "DisableSet",
+              "InputTree": "None",
+              "RaidPadSet": "HealingLimbSelector"
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 2
+        }
+      ],
+      "LS": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "DropBackpack",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 2
+        }
+      ],
+      "BACK": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ToggleGoggles",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 2
+        }
+      ]
+    },
+    "RB": {
+      "X": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ChamberUnload",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 1
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "CheckChamber",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Hold",
+          "Priority": 1
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "UnloadMagazine",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "DoubleClick",
+          "Priority": 1
+        }
+      ],
+      "B": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "EnableSet",
+              "InputTree": "None",
+              "RaidPadSet": "Movement"
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 1
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "DisableSet",
+              "InputTree": "None",
+              "RaidPadSet": "Movement"
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 1
+        }
+      ],
+      "Y": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "FoldStock",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 1
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "CheckChamber",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Hold",
+          "Priority": 1
+        }
+      ],
+      "LEFT": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ToggleLeanLeft",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 1
+        }
+      ],
+      "RIGHT": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ToggleLeanRight",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 1
+        }
+      ],
+      "BACK": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "SwitchHeadLight",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 1
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ToggleHeadLight",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Hold",
+          "Priority": 1
+        }
+      ]
+    },
+    "LB_RB": {
+      "UP": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ToggleBlindAbove",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 3
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "BlindShootEnd",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 3
+        }
+      ],
+      "DOWN": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ToggleBlindRight",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 3
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "BlindShootEnd",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 3
+        }
+      ],
+      "LEFT": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ToggleStepLeft",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 3
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ReturnFromLeftStep",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 3
+        }
+      ],
+      "RIGHT": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ToggleStepRight",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 3
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ReturnFromRightStep",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 3
+        }
+      ],
+      "A": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "PressSlot8",
+              "RaidPadSet": ""
+            },
+            {
+              "Command": "EnableSet",
+              "InputTree": "None",
+              "RaidPadSet": "HealingLimbSelector"
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 3
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "SelectFastSlot8",
+              "RaidPadSet": ""
+            },
+            {
+              "Command": "DisableSet",
+              "InputTree": "None",
+              "RaidPadSet": "HealingLimbSelector"
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 3
+        }
+      ],
+      "B": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "PressSlot9",
+              "RaidPadSet": ""
+            },
+            {
+              "Command": "EnableSet",
+              "InputTree": "None",
+              "RaidPadSet": "HealingLimbSelector"
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 3
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "SelectFastSlot9",
+              "RaidPadSet": ""
+            },
+            {
+              "Command": "DisableSet",
+              "InputTree": "None",
+              "RaidPadSet": "HealingLimbSelector"
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 3
+        }
+      ],
+      "X": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "PressSlot0",
+              "RaidPadSet": ""
+            },
+            {
+              "Command": "EnableSet",
+              "InputTree": "None",
+              "RaidPadSet": "HealingLimbSelector"
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 3
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "SelectFastSlot0",
+              "RaidPadSet": ""
+            },
+            {
+              "Command": "DisableSet",
+              "InputTree": "None",
+              "RaidPadSet": "HealingLimbSelector"
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 3
+        }
+      ],
+      "Y": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "DisplayTimer",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 3
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "DisplayTimerAndExits",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "DoubleClick",
+          "Priority": 3
+        }
+      ]
+    },
+    "ActionPanel": {
+      "X": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "BeginInteracting",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 10
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "EndInteracting",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 10
+        }
+      ],
+      "UP": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ScrollPrevious",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 10
+        }
+      ],
+      "DOWN": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ScrollNext",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 10
+        }
+      ]
+    },
+    "HealingLimbSelector": {
+      "UP": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ScrollNext",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 11
+        }
+      ],
+      "DOWN": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ScrollPrevious",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 11
+        }
+      ]
+    },
+    "Movement": {
+      "UP": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "NextWalkPose",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 3
+        }
+      ],
+      "DOWN": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "PreviousWalkPose",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 3
+        }
+      ],
+      "LSLEFT": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "SlowLeanLeft",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 3
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "EndSlowLean",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 3
+        }
+      ],
+      "LSRIGHT": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "SlowLeanRight",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 3
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "EndSlowLean",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 3
+        }
+      ]
+    },
+    "Aiming": {
+      "RS": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "ToggleBreathing",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 4
+        }
+      ],
+      "LS": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "WeaponMounting",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 4
+        }
+      ],
+      "RB": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "EnableSet",
+              "InputTree": "None",
+              "RaidPadSet": "Aiming_RB"
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 4
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "DisableSet",
+              "InputTree": "None",
+              "RaidPadSet": "Aiming_RB"
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 4
+        }
+      ]
+    },
+    "Aiming_RB": {
+      "UP": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "OpticCalibrationSwitchUp",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 4
+        }
+      ],
+      "DOWN": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "OpticCalibrationSwitchDown",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 4
+        }
+      ]
+    },
+    "Interface": {
+      "UP": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InterfaceUp",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 20
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InterfaceDisableAutoMove",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 20
+        }
+      ],
+      "DOWN": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InterfaceDown",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 20
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InterfaceDisableAutoMove",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 20
+        }
+      ],
+      "LEFT": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InterfaceLeft",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 20
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InterfaceDisableAutoMove",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 20
+        }
+      ],
+      "RIGHT": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InterfaceRight",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 20
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InterfaceDisableAutoMove",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 20
+        }
+      ],
+      "A": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "BeginDrag",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 20
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "ShowContextMenu",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Hold",
+          "Priority": 20
+        }
+      ],
+      "B": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InputTree",
+              "InputTree": "Escape",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 20
+        }
+      ],
+      "X": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "Use",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 20
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "UseHold",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Hold",
+          "Priority": 20
+        }
+      ],
+      "Y": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "QuickMove",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 20
+        }
+      ],
+      "RS": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "Discard",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 20
+        }
+      ],
+      "LB": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "EnableSet",
+              "InputTree": "None",
+              "RaidPadSet": "Interface_LB"
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 20
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "DisableSet",
+              "InputTree": "None",
+              "RaidPadSet": "Interface_LB"
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 20
+        }
+      ],
+      "LT": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "PreviousTab",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 20
+        }
+      ],
+      "RT": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "NextTab",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 20
+        }
+      ]
+    },
+    "OnDrag": {
+      "A": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "EndDrag",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 23
+        }
+      ],
+      "B": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "CancelDrag",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 23
+        }
+      ],
+      "X": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "RotateDragged",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 23
+        }
+      ],
+      "Y": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "SplitDragged",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 23
+        }
+      ]
+    },
+    "Interface_LB": {
+      "A": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InterfaceBind4",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 21
+        }
+      ],
+      "B": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InterfaceBind5",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 21
+        }
+      ],
+      "X": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InterfaceBind6",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 21
+        }
+      ],
+      "Y": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InterfaceBind7",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 21
+        }
+      ]
+    },
+    "Interface_LB_RB": {
+      "A": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InterfaceBind8",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 22
+        }
+      ],
+      "B": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InterfaceBind9",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 22
+        }
+      ],
+      "X": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "InterfaceBind10",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 22
+        }
+      ]
+    },
+    "SearchButton": {
+      "A": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "Search",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 24
+        }
+      ]
+    },
+    "ContextMenu": {
+      "A": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "ContextMenuUse",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 30
+        }
+      ],
+      "X": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "None",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 30
+        }
+      ],
+      "Y": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "None",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 30
+        }
+      ],
+      "RS": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "None",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 30
+        }
+      ]
+    },
+    "SplitDialog": {
+      "A": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "SplitDialogAccept",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 50
+        }
+      ],
+      "UP": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "SplitDialogAdd",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 50
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "SplitDialogDisableAutoMove",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 50
+        }
+      ],
+      "DOWN": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "SplitDialogSubtract",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 50
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "SplitDialogDisableAutoMove",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 50
+        }
+      ],
+      "LEFT": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "SplitDialogSubtract",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 50
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "SplitDialogDisableAutoMove",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 50
+        }
+      ],
+      "RIGHT": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "SplitDialogAdd",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 50
+        },
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "SplitDialogDisableAutoMove",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Release",
+          "Priority": 50
+        }
+      ],
+      "RS": [
+        {
+          "RaidPadCommands": [
+            {
+              "Command": "None",
+              "InputTree": "None",
+              "RaidPadSet": ""
+            }
+          ],
+          "PressType": "Press",
+          "Priority": 50
+        }
+      ]
+    }
+  }
+}

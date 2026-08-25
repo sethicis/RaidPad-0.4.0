@@ -11,9 +11,10 @@
     <DebugType>none</DebugType>
     <Deterministic>true</Deterministic>
     <NoWarn>$(NoWarn);CS0618;CS0612;CS0414;CS0169;CS0649</NoWarn>
-    <EftManaged>C:\SPT\EscapeFromTarkov_Data\Managed</EftManaged>
-    <SptPlugins>C:\SPT\BepInEx\plugins\spt</SptPlugins>
-    <BepInExCore>C:\SPT\BepInEx\core</BepInExCore>
+    <ModVersion>0.6.0</ModVersion>
+    <EftManaged>..\..\..\EscapeFromTarkov_Data\Managed</EftManaged>
+    <SptPlugins>..\..\..\BepInEx\plugins\spt</SptPlugins>
+    <BepInExCore>..\..\..\BepInEx\core</BepInExCore>
   </PropertyGroup>
 
   <ItemGroup>
@@ -59,5 +60,29 @@
     <Reference Include="SharpDX"><HintPath>..\libs\SharpDX.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="SharpDX.XInput"><HintPath>..\libs\SharpDX.XInput.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpDX.XInput" Version="4.2.0" />
+  </ItemGroup>
+
+  <Target Name="GeneratePluginInfo" BeforeTargets="BeforeBuild">
+    <WriteLinesToFile
+      File="$(MSBuildProjectDirectory)/PluginInfo.g.cs"
+      Lines="namespace RaidPad { internal static class PluginInfo { public const string Version = &quot;$(ModVersion)&quot;%3B } }"
+      Overwrite="true" />
+  </Target>
+
+  <Target Name="FinalizeBuild" AfterTargets="Build" Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+    <ItemGroup>
+      <_OutputFiles Include="$(TargetDir)*.dll" />
+    </ItemGroup>
+    <ItemGroup>
+      <_Assets Include="$(MSBuildProjectDirectory)/assets/**/*" />
+    </ItemGroup>
+    <MakeDir Directories="$(MSBuildProjectDirectory)/../../../build/RaidPad/assets/sounds" />
+    <Copy SourceFiles="@(_OutputFiles)" DestinationFolder="$(MSBuildProjectDirectory)/../../../build/RaidPad" />
+    <Copy SourceFiles="@(_Assets)" DestinationFolder="$(MSBuildProjectDirectory)/../../../build/RaidPad/assets/%(RecursiveDir)" />
+    <ZipDirectory SourceDirectory="$(MSBuildProjectDirectory)/../../../build/RaidPad" DestinationFile="$(MSBuildProjectDirectory)/../../../build/RaidPad-$(ModVersion).zip" Overwrite="true" />
+  </Target>
 
 </Project>
