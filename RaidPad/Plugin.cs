@@ -85,6 +85,9 @@ namespace RaidPad
 
         private void Awake()
         {
+            // RaidPadClass is static in places, so expose the plugin's log source statically.
+            Log = Logger;
+
             var sptVersion = Chainloader.PluginInfos["com.SPT.core"].Metadata.Version;
             if (sptVersion.Major > 4 || (sptVersion.Major == 4 && sptVersion.Minor > 1))
             {
@@ -381,16 +384,20 @@ namespace RaidPad
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(ContainedGridsView).GetMethod("Close", BindingFlags.Instance | BindingFlags.Public);
+            // Neither ContainedGridsView nor GeneratedGridsView overrides Close, so this
+            // always resolved to UIElement.Close. Target it directly and filter by type
+            // below rather than reflecting an unimplemented override off a derived type.
+            return typeof(UIElement).GetMethod("Close", BindingFlags.Instance | BindingFlags.Public);
         }
         [PatchPostfix]
-        private static void PatchPostFix(ref ContainedGridsView __instance)
+        private static void PatchPostFix(ref UIElement __instance)
         {
-            if (__instance == null) return;
+            ContainedGridsView containedGridsView = __instance as ContainedGridsView;
+            if (containedGridsView == null) return;
 
-            if (__instance.GetComponentInParent<GridWindow>() != null)
+            if (containedGridsView.GetComponentInParent<GridWindow>() != null)
             {
-                RaidPadPlugin.RaidPadClassComponent.containedGridsViews.Remove(__instance);
+                RaidPadPlugin.RaidPadClassComponent.containedGridsViews.Remove(containedGridsView);
             }
         }
     }
@@ -708,12 +715,16 @@ namespace RaidPad
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(ScrollRectNoDrag).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic);
+            // ScrollRectNoDrag overrides OnEnable but not OnDisable, so this always
+            // resolved to ScrollRect.OnDisable. Target it directly and filter by type below.
+            return typeof(ScrollRect).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic);
         }
         [PatchPostfix]
-        private static void PatchPostFix(ref ScrollRectNoDrag __instance)
+        private static void PatchPostFix(ref ScrollRect __instance)
         {
-            RaidPadPlugin.RaidPadClassComponent.scrollRectNoDrags.Remove(__instance);
+            ScrollRectNoDrag scrollRectNoDrag = __instance as ScrollRectNoDrag;
+            if (scrollRectNoDrag == null) return;
+            RaidPadPlugin.RaidPadClassComponent.scrollRectNoDrags.Remove(scrollRectNoDrag);
         }
     }
     public class SimpleStashPanelShowPatch : ModulePatch
@@ -781,17 +792,18 @@ namespace RaidPad
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(ContextMenuButton).GetMethod("Close", BindingFlags.Instance | BindingFlags.Public);
+            // ContextMenuButton does not override Close, so this always resolved to
+            // SimpleContextMenuButton.Close. Target it directly and filter by type below.
+            return typeof(SimpleContextMenuButton).GetMethod("Close", BindingFlags.Instance | BindingFlags.Public);
         }
         [PatchPostfix]
-        private static void PatchPostFix(ref ContextMenuButton __instance)
+        private static void PatchPostFix(ref SimpleContextMenuButton __instance)
         {
-            if (__instance == null)
+            ContextMenuButton contextMenuButton = __instance as ContextMenuButton;
+            if (contextMenuButton != null)
             {
-                goto Skip;
+                RaidPadPlugin.RaidPadClassComponent.contextMenuButtons.Remove(contextMenuButton);
             }
-            RaidPadPlugin.RaidPadClassComponent.contextMenuButtons.Remove(__instance);
-            Skip:
             if (RaidPadPlugin.RaidPadClassComponent.contextMenuButtons.Count == 0)
             {
                 RaidPadPlugin.RaidPadClassComponent.UpdateContextMenuBinds(false);
@@ -843,15 +855,18 @@ namespace RaidPad
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(SearchableSlotView).GetMethod("Close", BindingFlags.Instance | BindingFlags.Public);
+            // SearchableSlotView overrides Show but not Close, so this always resolved to
+            // SlotView.Close. Target it directly and filter by type below.
+            return typeof(SlotView).GetMethod("Close", BindingFlags.Instance | BindingFlags.Public);
         }
         [PatchPostfix]
-        private static void PatchPostFix(ref SearchableSlotView __instance)
+        private static void PatchPostFix(ref SlotView __instance)
         {
-            if (__instance == null) return;
-            if (__instance.Slot != null && __instance.Slot.IsSpecial)
+            SearchableSlotView searchableSlotView = __instance as SearchableSlotView;
+            if (searchableSlotView == null) return;
+            if (searchableSlotView.Slot != null && searchableSlotView.Slot.IsSpecial)
             {
-                RaidPadPlugin.RaidPadClassComponent.specialSlotSlotViews.Remove(__instance);
+                RaidPadPlugin.RaidPadClassComponent.specialSlotSlotViews.Remove(searchableSlotView);
             }
 
         }

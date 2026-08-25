@@ -5366,11 +5366,21 @@ namespace RaidPad
             {
                 LoadSprite(File);
             }
-            string[] AudioFiles = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory + "/BepInEx/plugins/RaidPad/assets/sounds/");
-            foreach (string File in AudioFiles)
+            // There are no sound assets at this time, I assume this is meant for future support?
+            string SoundsPath = AppDomain.CurrentDomain.BaseDirectory + "/BepInEx/plugins/RaidPad/assets/sounds/";
+            try
             {
-                LoadAudioClip(File);
+                string[] AudioFiles = Directory.GetFiles(SoundsPath);
+                foreach (string File in AudioFiles)
+                {
+                    LoadAudioClip(File);
+                }
             }
+            catch (DirectoryNotFoundException)
+            {
+                RaidPadPlugin.Log.LogWarning($"Sound asset directory not found, skipping audio load: {SoundsPath}");
+            }
+            
         }
         private async static void LoadSprite(string path)
         {
