@@ -79,9 +79,9 @@
     <ItemGroup>
       <_Assets Include="$(MSBuildProjectDirectory)/assets/**/*" />
     </ItemGroup>
-    <MakeDir Directories="$(MSBuildProjectDirectory)/../../../build/RaidPad/assets/sounds" />
-    <Copy SourceFiles="@(_OutputFiles)" DestinationFolder="$(MSBuildProjectDirectory)/../../../build/RaidPad" />
-    <Copy SourceFiles="@(_Assets)" DestinationFolder="$(MSBuildProjectDirectory)/../../../build/RaidPad/assets/%(RecursiveDir)" />
+    <MakeDir Directories="$(MSBuildProjectDirectory)/../../../build/RaidPad/BepInEx/plugins/RaidPad/assets/sounds" />
+    <Copy SourceFiles="@(_OutputFiles)" DestinationFolder="$(MSBuildProjectDirectory)/../../../build/RaidPad/BepInEx/plugins/RaidPad" />
+    <Copy SourceFiles="@(_Assets)" DestinationFolder="$(MSBuildProjectDirectory)/../../../build/RaidPad/BepInEx/plugins/RaidPad/assets/%(RecursiveDir)" />
     <ZipDirectory SourceDirectory="$(MSBuildProjectDirectory)/../../../build/RaidPad" DestinationFile="$(MSBuildProjectDirectory)/../../../build/RaidPad-$(ModVersion).zip" Overwrite="true" />
   </Target>
 
