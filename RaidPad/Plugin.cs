@@ -1,4 +1,4 @@
-﻿using SPT.Reflection.Patching;
+using SPT.Reflection.Patching;
 using BepInEx;
 using BepInEx.Bootstrap;
 using System.Reflection;
@@ -269,10 +269,12 @@ namespace RaidPad
             return typeof(ActionPanel).GetMethod("AvailableInteractionStateChangedHandler", BindingFlags.Instance | BindingFlags.Public);
         }
         [PatchPostfix]
-        private static void PatchPostFix(ref ActionPanel __instance)
+        private static void PatchPostFix(ref ActionPanel __instance, AvailableInteractionState interactionState)
         {
-            // Possible Explosion of the whole mod
-            bool Enabled = Traverse.Create(__instance).Field("bool_0").GetValue<bool>();
+            // 4.1.x removed the obfuscated bool_0 field this used to read. Traverse returned
+            // default(bool) for the missing field, so the binds were permanently disabled.
+            // Mirror the game's own gate for _interactionButtonsContainer visibility instead.
+            bool Enabled = interactionState != null && interactionState.Actions.Count > 0;
             RaidPadPlugin.RaidPadClassComponent.UpdateActionPanelBinds(Enabled);
         }
     }
@@ -490,9 +492,13 @@ namespace RaidPad
         [PatchPostfix]
         private static void PatchPostFix(ref ContainersPanel __instance)
         {
-            if (__instance.transform.parent.gameObject.name == "Scrollview Parent")
+            Dictionary<EquipmentSlot, SlotView> slotViews = Traverse.Create(__instance).Field("_slotViews").GetValue<Dictionary<EquipmentSlot, SlotView>>();
+            if (slotViews == null) return;
+
+            Transform parent = __instance.transform.parent;
+            if (parent != null && parent.gameObject.name == "Scrollview Parent")
             {
-                foreach (KeyValuePair<EquipmentSlot, SlotView> slotView in Traverse.Create(__instance).Field("dictionary_0").GetValue<Dictionary<EquipmentSlot, SlotView>>())
+                foreach (KeyValuePair<EquipmentSlot, SlotView> slotView in slotViews)
                 {
                     if (slotView.Key != EquipmentSlot.Pockets)
                     {
@@ -502,11 +508,11 @@ namespace RaidPad
             }
             else
             {
-                foreach (KeyValuePair<EquipmentSlot, SlotView> slotView in Traverse.Create(__instance).Field("dictionary_0").GetValue<Dictionary<EquipmentSlot, SlotView>>())
+                foreach (KeyValuePair<EquipmentSlot, SlotView> slotView in slotViews)
                 {
                     if (slotView.Key != EquipmentSlot.Pockets) RaidPadPlugin.RaidPadClassComponent.lootContainersSlotViews.Add(slotView.Value);
                 }
-                SlotView dogtagSlotView = Traverse.Create(__instance).Field("slotView_0").GetValue<SlotView>();
+                SlotView dogtagSlotView = Traverse.Create(__instance).Field("_dogtagSlotView").GetValue<SlotView>();
                 if (dogtagSlotView != null && dogtagSlotView.gameObject.activeSelf)
                 {
                     RaidPadPlugin.RaidPadClassComponent.dogtagSlotView = dogtagSlotView;
@@ -759,8 +765,10 @@ namespace RaidPad
         private static void PatchPostFix(ref ContextMenuButton __instance)
         {
             if (RaidPadPlugin.RaidPadClassComponent.contextMenuButtons.Contains(__instance)) return;
-            SimpleContextMenu simpleContextMenu;
-            if (!__instance.transform.parent.parent.TryGetComponent<SimpleContextMenu>(out simpleContextMenu)) return;
+            // 4.1.x routes button creation through InteractionButtonsContainer and parents them
+            // under its _buttonsContainer, so SimpleContextMenu is no longer exactly two levels
+            // up. Walk the full parent chain instead of assuming a fixed depth.
+            if (__instance.GetComponentInParent<SimpleContextMenu>() == null) return;
             RaidPadPlugin.RaidPadClassComponent.contextMenuButtons.Add(__instance);
             if (!RaidPadPlugin.RaidPadClassComponent.ContextMenu)
             {
