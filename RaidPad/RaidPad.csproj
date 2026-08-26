@@ -11,7 +11,7 @@
     <DebugType>none</DebugType>
     <Deterministic>true</Deterministic>
     <NoWarn>$(NoWarn);CS0618;CS0612;CS0414;CS0169;CS0649</NoWarn>
-    <ModVersion>0.6.2</ModVersion>
+    <ModVersion>0.7.0</ModVersion>
     <EftManaged>..\..\..\EscapeFromTarkov_Data\Managed</EftManaged>
     <SptPlugins>..\..\..\BepInEx\plugins\spt</SptPlugins>
     <BepInExCore>..\..\..\BepInEx\core</BepInExCore>

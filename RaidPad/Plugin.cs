@@ -32,6 +32,13 @@ namespace RaidPad
         // RaidPad
         public static ConfigEntry<int> UserIndex { get; set; }
 
+        // Menu Cursor
+        public static ConfigEntry<bool> MenuCursorEnabled { get; set; }
+        public static ConfigEntry<bool> MenuCursorCrosshair { get; set; }
+        public static ConfigEntry<float> MenuCursorSpeed { get; set; }
+        public static ConfigEntry<float> MenuScrollSpeed { get; set; }
+        public static ConfigEntry<KeyCode> MenuRotateKey { get; set; }
+
         // Input
         public static ConfigEntry<float> LSDeadzone { get; set; }
         public static ConfigEntry<float> RSDeadzone { get; set; }
@@ -57,6 +64,7 @@ namespace RaidPad
         public static ConfigEntry<float> StickinessRadius { get; set; }
         public static ConfigEntry<float> AutoAimRadius { get; set; }
         public static ConfigEntry<float> Radius { get; set; }
+        public static ConfigEntry<bool> ExcludeTeammates { get; set; }
 
 
         // Movement
@@ -71,6 +79,7 @@ namespace RaidPad
         public static ConfigEntry<ERaidPadUseStick> InterfaceSkipStick { get; set; }
         public static ConfigEntry<ERaidPadUseStick> ScrollStick { get; set; }
         public static ConfigEntry<ERaidPadUseStick> WindowStick { get; set; }
+        public static ConfigEntry<float> InterfaceStickMoveDelay { get; set; }
 
         // UI Selected Box
         public static ConfigEntry<Color> SelectColor { get; set; }
@@ -107,7 +116,13 @@ namespace RaidPad
         private void Start()
         {
 
-            UserIndex = Config.Bind("RaidPad", "User Index", 1, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100 }));
+            UserIndex = Config.Bind("RaidPad", "User Index", 0, new ConfigDescription("XInput slot. 0 = Auto (scan all slots, pick the first connected pad — recommended, and required for DS4Windows / Steam Input / ViGEm virtual pads that may land on any slot). 1-4 = pin a specific slot.", new AcceptableValueRange<int>(0, 4), new ConfigurationManagerAttributes { Order = 100 }));
+
+            MenuCursorEnabled = Config.Bind("Menu Cursor", "Enabled", true, new ConfigDescription("Out of raid, drive the Windows mouse cursor with the pad so you can navigate menus (main menu, stash, traders, flea, settings). Right stick = move, left stick = scroll, left click = A or LT, right click = RT, X/Square = rotate held item, B = back/Escape. In-raid controls are unaffected.", null, new ConfigurationManagerAttributes { Order = 90 }));
+            MenuCursorCrosshair = Config.Bind("Menu Cursor", "Draw Crosshair Overlay", true, new ConfigDescription("Draw RaidPad's own crosshair at the cursor. EFT's native pointer is force-shown while the menu cursor is active, so once you confirm you can see the real cursor you can turn this off. Leave on as a fallback (e.g. exclusive fullscreen may hide the hardware cursor).", null, new ConfigurationManagerAttributes { Order = 85 }));
+            MenuCursorSpeed = Config.Bind("Menu Cursor", "Cursor Speed", 1600f, new ConfigDescription("Cursor movement speed in pixels per second at full right-stick deflection.", new AcceptableValueRange<float>(200f, 5000f), new ConfigurationManagerAttributes { Order = 80 }));
+            MenuScrollSpeed = Config.Bind("Menu Cursor", "Scroll Speed", 15f, new ConfigDescription("Scroll-wheel notches per second at full left-stick deflection.", new AcceptableValueRange<float>(1f, 60f), new ConfigurationManagerAttributes { Order = 70 }));
+            MenuRotateKey = Config.Bind("Menu Cursor", "Rotate Key", KeyCode.R, new ConfigDescription("Keystroke sent when you press X / Square in menus to rotate the held item. Must match EFT's 'Rotate item' bind (default R).", null, new ConfigurationManagerAttributes { Order = 60 }));
 
             LSDeadzone = Config.Bind("Inputs", "LSDeadzone", 0.25f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 150, IsAdvanced = true }));
             RSDeadzone = Config.Bind("Inputs", "RSDeadzone", 0.25f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 140, IsAdvanced = true }));
@@ -131,6 +146,7 @@ namespace RaidPad
             StickinessRadius = Config.Bind("Aim Assist", "StickinessRadius", 0.2f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 120, IsAdvanced = true }));
             AutoAimRadius = Config.Bind("Aim Assist", "AutoAimRadius", 0.5f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 110, IsAdvanced = true }));
             Radius = Config.Bind("Aim Assist", "Radius", 5f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100, IsAdvanced = true }));
+            ExcludeTeammates = Config.Bind("Aim Assist", "ExcludeTeammates", true, new ConfigDescription("Don't let aim assist lock onto your own group (e.g. Fika teammates) or dead bodies.", null, new ConfigurationManagerAttributes { Order = 190 }));
 
             MovementDeadzone = Config.Bind("Movement", "MovementDeadzone", 0.25f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 130 }));
             DeadzoneBuffer = Config.Bind("Movement", "DeadzoneBuffer", 0.5f, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 120, IsAdvanced = true }));
@@ -142,6 +158,7 @@ namespace RaidPad
             InterfaceSkipStick = Config.Bind("UI", "InterfaceSkipStick", ERaidPadUseStick.RS, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 120 }));
             ScrollStick = Config.Bind("UI", "ScrollStick", ERaidPadUseStick.LS, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 110 }));
             WindowStick = Config.Bind("UI", "WindowStick", ERaidPadUseStick.LS, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100 }));
+            InterfaceStickMoveDelay = Config.Bind("UI", "InterfaceStickMoveDelay", 0.15f, new ConfigDescription("Seconds between selection moves when holding the interface navigation stick. Higher = slower / less sensitive.", new AcceptableValueRange<float>(0.05f, 1f), new ConfigurationManagerAttributes { Order = 105 }));
 
             SelectColor = Config.Bind("UI Selected Box", "SelectColor", new Color(1f, 0.7659f, 0.3518f, 1), new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100 }));
 
@@ -746,15 +763,17 @@ namespace RaidPad
             SearchableItemView searchableItemView = Traverse.Create(instance).Field("_simplePanel").GetValue<SearchableItemView>();
             if (searchableItemView != null)
             {
-                GeneratedGridsView generatedGridsView = Traverse.Create(searchableItemView).Field("containedGridsView_0").GetValue<GeneratedGridsView>();
-                if (generatedGridsView != null)
+                // 4.1.x renamed the obfuscated containedGridsView_0 to _containedGridsView, and it is
+                // typed as the ContainedGridsView base (TemplatedGridsView for rig layouts).
+                ContainedGridsView containedGridsView = Traverse.Create(searchableItemView).Field("_containedGridsView").GetValue<ContainedGridsView>();
+                if (containedGridsView != null)
                 {
-                    if (generatedGridsView.GridViews.Count() == 0)
+                    if (containedGridsView.GridViews.Count() == 0)
                     {
                         ShowAsync(instance);
                         return;
                     }
-                    GridView gridView = generatedGridsView.GridViews[0];
+                    GridView gridView = containedGridsView.GridViews[0];
                     if (gridView != null)
                     {
                         Searching = false;

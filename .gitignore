@@ -15,3 +15,5 @@ RaidPad/bin
 RaidPad/obj
 RaidPad/PluginInfo.g.cs
 RaidPad.sln.DotSettings.user
+
+compiled-dlls/

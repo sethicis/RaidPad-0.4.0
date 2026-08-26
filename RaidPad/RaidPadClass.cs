@@ -38,6 +38,15 @@ namespace RaidPad
         public Controller controller;
         public Gamepad gamepad;
         public bool connected = false;
+        private int controllerRescanCounter = 0;
+
+        // Native PS pad fallback, used when no XInput slot is occupied.
+        private RaidPadHidController hid;
+        private bool usingHid = false;
+
+        // Out-of-raid mouse driver.
+        private RaidPadMenuCursor menuCursor = new RaidPadMenuCursor();
+        private bool menuCursorWasActive = false;
         public float maxValue = short.MaxValue;
 
         // Inputs
@@ -276,7 +285,7 @@ namespace RaidPad
         private MethodInfo CalculateRotatedSize;
         private MethodInfo DraggedItemViewMethodRotateItem;
 
-        private MethodInfo ItemUIContextDialogWindowContext;
+        private MethodInfo ItemUIContextBindItem;
         private object[] ItemUIContextInvokeParameters = new object[2] { typeof(Item), EBoundItem.Item4 };
 
         private MethodInfo ShowContextMenu;
@@ -300,9 +309,36 @@ namespace RaidPad
         public static Dictionary<string, Sprite> LoadedSprites = new Dictionary<string, Sprite>();
         public static Dictionary<string, AudioClip> LoadedAudioClips = new Dictionary<string, AudioClip>();
 
+        private Texture2D _cursorWhiteTex;
+        private Texture2D _cursorBlackTex;
+
+        private void DrawCursorBar(float cx, float cy, float w, float h, Texture2D tex)
+        {
+            GUI.DrawTexture(new Rect(cx - (w / 2f), cy - (h / 2f), w, h), tex);
+        }
+
         public void OnGUI()
         {
-            // TODO: delete the unreachable code
+            if (connected && !InRaid && RaidPadPlugin.MenuCursorEnabled.Value && RaidPadPlugin.MenuCursorCrosshair.Value)
+            {
+                if (_cursorWhiteTex == null)
+                {
+                    _cursorWhiteTex = new Texture2D(1, 1);
+                    _cursorWhiteTex.SetPixel(0, 0, Color.white);
+                    _cursorWhiteTex.Apply();
+                    _cursorBlackTex = new Texture2D(1, 1);
+                    _cursorBlackTex.SetPixel(0, 0, new Color(0f, 0f, 0f, 0.85f));
+                    _cursorBlackTex.Apply();
+                }
+                Vector3 mouse = Input.mousePosition;
+                float cx = mouse.x;
+                float cy = Screen.height - mouse.y;
+                DrawCursorBar(cx, cy, 24f, 6f, _cursorBlackTex);
+                DrawCursorBar(cx, cy, 6f, 24f, _cursorBlackTex);
+                DrawCursorBar(cx, cy, 20f, 2f, _cursorWhiteTex);
+                DrawCursorBar(cx, cy, 2f, 20f, _cursorWhiteTex);
+            }
+            // The 0.4.0 debug HUD below this point was already dead (unconditional return).
             return;
             GUILayout.BeginArea(new Rect(20, 10, 1280, 720));
 
@@ -563,12 +599,15 @@ namespace RaidPad
         private void Awake()
         {
             AimAssistLayerMask = LayerMask.GetMask("Player");
-            HighLayerMask = LayerMask.GetMask("Terrain", "HighPolyCollider");
+            // TransparentCollider matches EFT's own BallisticsCalculatorConstants.STATIC_HITTABLE_LAYERS:
+            // a bullet stops at glass, so aim assist must not see a target through a window either.
+            HighLayerMask = LayerMask.GetMask("Terrain", "HighPolyCollider", "TransparentCollider");
         }
         public void Start()
         {
-            // Note: method appears to still be called method_1 in spt-4.1
-            ItemUIContextDialogWindowContext = typeof(ItemUiContext).GetMethod("method_1", BindingFlags.Instance | BindingFlags.Public);
+            // 4.1.x de-obfuscated this to BindItem(Item, EBoundItem). method_1 still exists but is
+            // now an unrelated 7-parameter message-window helper, so invoking it with 2 args threw.
+            ItemUIContextBindItem = typeof(ItemUiContext).GetMethod("BindItem", BindingFlags.Instance | BindingFlags.Public);
             TranslateInput = typeof(InputTree).GetMethod("TranslateInput", BindingFlags.Instance | BindingFlags.Public);
             ButtonPress = typeof(Button).GetMethod("Press", BindingFlags.Instance | BindingFlags.NonPublic);
             ExecuteMiddleClick = typeof(ItemView).GetMethod("ExecuteMiddleClick", BindingFlags.Instance | BindingFlags.Public);
@@ -599,13 +638,55 @@ namespace RaidPad
         }
         public void Update()
         {
-            if (!connected) return;
+            if (!connected)
+            {
+                // Re-scan roughly once a second so a pad plugged in mid-session is picked up.
+                if ((++controllerRescanCounter & 0x3F) == 0) ResolveController();
+                if (!connected) return;
+            }
 
             InRaid = Player != null;
 
-            if (!InRaid) return;
+            try
+            {
+                if (usingHid)
+                {
+                    if (!hid.Alive)
+                    {
+                        connected = false;
+                        return;
+                    }
+                    gamepad = hid.GetGamepad();
+                }
+                else
+                {
+                    gamepad = controller.GetState().Gamepad;
+                }
+            }
+            catch
+            {
+                connected = false;
+                return;
+            }
 
-            gamepad = controller.GetState().Gamepad;
+            // Out of raid the menus are plain mouse UI, so drive the real cursor instead of
+            // synthesising EFT input commands.
+            if (!InRaid)
+            {
+                if (RaidPadPlugin.MenuCursorEnabled.Value)
+                {
+                    menuCursor.OnRotate = ControllerRotateMenuDragged;
+                    menuCursor.Update(gamepad, Time.unscaledDeltaTime);
+                    menuCursorWasActive = true;
+                }
+                return;
+            }
+
+            if (menuCursorWasActive)
+            {
+                menuCursor.Release();
+                menuCursorWasActive = false;
+            }
 
             if (LeftTrigger > RaidPadPlugin.LTDeadzone.Value)
             {
@@ -1242,7 +1323,7 @@ namespace RaidPad
                         if (InterfaceStickMoveTime > InterfaceStickMoveTimeDelay && (Mathf.Abs(LS.x) > RaidPadPlugin.LSDeadzone.Value || Mathf.Abs(LS.y) > RaidPadPlugin.LSDeadzone.Value))
                         {
                             InterfaceStickMoveTime = 0f;
-                            InterfaceStickMoveTimeDelay = 0.15f;
+                            InterfaceStickMoveTimeDelay = RaidPadPlugin.InterfaceStickMoveDelay.Value;
                             ControllerUIMove(new Vector2Int(LS.x > RaidPadPlugin.LSDeadzone.Value ? 1 : LS.x < -RaidPadPlugin.LSDeadzone.Value ? -1 : 0, LS.y > RaidPadPlugin.LSDeadzone.Value ? 1 : LS.y < -RaidPadPlugin.LSDeadzone.Value ? -1 : 0), false);
                         }
                         else if (!(Mathf.Abs(LS.x) > RaidPadPlugin.LSDeadzone.Value || Mathf.Abs(LS.y) > RaidPadPlugin.LSDeadzone.Value))
@@ -1257,7 +1338,7 @@ namespace RaidPad
                         if (InterfaceStickMoveTime > InterfaceStickMoveTimeDelay && (Mathf.Abs(RS.x) > RaidPadPlugin.RSDeadzone.Value || Mathf.Abs(RS.y) > RaidPadPlugin.RSDeadzone.Value))
                         {
                             InterfaceStickMoveTime = 0f;
-                            InterfaceStickMoveTimeDelay = 0.15f;
+                            InterfaceStickMoveTimeDelay = RaidPadPlugin.InterfaceStickMoveDelay.Value;
                             ControllerUIMove(new Vector2Int(RS.x > RaidPadPlugin.RSDeadzone.Value ? 1 : RS.x < -RaidPadPlugin.RSDeadzone.Value ? -1 : 0, RS.y > RaidPadPlugin.RSDeadzone.Value ? 1 : RS.y < -RaidPadPlugin.RSDeadzone.Value ? -1 : 0), false);
                         }
                         else if (!(Mathf.Abs(RS.x) > RaidPadPlugin.RSDeadzone.Value || Mathf.Abs(RS.y) > RaidPadPlugin.RSDeadzone.Value))
@@ -1380,10 +1461,11 @@ namespace RaidPad
                 AimPosition = Vector3.one;
                 AimDirection = Vector3.forward;
 
-                if (firearmController == null)
-                {
-                    firearmController = Player.HandsController as Player.FirearmController;
-                }
+                // Never cache this. EFT pools hands controllers, so a cached reference stays
+                // non-null across a weapon swap while still pointing at the previous weapon's
+                // fireport. That put the occlusion raycast's origin on the wrong muzzle, which is
+                // what let aim assist lock through walls.
+                firearmController = Player.HandsController as Player.FirearmController;
                 if (firearmController != null)
                 {
                     AimPosition = firearmController.CurrentFireport.position;
@@ -1404,7 +1486,7 @@ namespace RaidPad
                     SSAARatio = (float)currentSSAA.GetOutputHeight() / (float)currentSSAA.GetInputHeight();
 
                     HitAimAssistLocalPlayer = colliders[i].transform.gameObject.GetComponent<LocalPlayer>();
-                    if (HitAimAssistLocalPlayer != null && HitAimAssistLocalPlayer != Player)
+                    if (HitAimAssistLocalPlayer != null && HitAimAssistLocalPlayer != Player && IsAimAssistTarget(HitAimAssistLocalPlayer))
                     {
                         AimAssistScreenLocalPosition = ((((((Vector2)Camera.main.WorldToScreenPoint(HitAimAssistLocalPlayer.PlayerBones.Head.position + (HitAimAssistLocalPlayer.Velocity * 0f))  * SSAARatio) - (((((Vector2)Camera.main.WorldToScreenPoint(AimPosition + (AimDirection * Vector3.Distance(AimPosition, HitAimAssistLocalPlayer.PlayerBones.Head.position + (HitAimAssistLocalPlayer.Velocity * 0f))))  * SSAARatio) - (((Vector2)Camera.main.WorldToScreenPoint(HitAimAssistLocalPlayer.PlayerBones.Head.position + (HitAimAssistLocalPlayer.Velocity * 0f))  * SSAARatio) - (ScreenSize / 2f))) - (ScreenSize / 2f)) * 2f)) - (ScreenSize / 2f)) / ScreenSize) * ScreenSizeRatioMultiplier);
                         AimAssistBoneAngle = Mathf.Sqrt(Vector2.SqrMagnitude(AimAssistScreenLocalPosition)) / (ScreenSize.y / ScreenSize.x);
@@ -1489,29 +1571,71 @@ namespace RaidPad
         {
             if (Player != null)
             {
-                switch (RaidPadPlugin.UserIndex.Value)
+                ResolveController();
+            }
+        }
+
+        /// <summary>
+        /// Pick an input device: the pinned XInput slot if the user set one and it is live,
+        /// otherwise the first occupied XInput slot, otherwise a native DualShock/DualSense pad.
+        /// </summary>
+        private void ResolveController()
+        {
+            int index = RaidPadPlugin.UserIndex.Value;
+            if (index >= 1 && index <= 4)
+            {
+                Controller pinned = new Controller((UserIndex)(index - 1));
+                if (pinned.IsConnected)
                 {
-                    case 1:
-                        controller = new Controller(UserIndex.One);
-                        connected = controller.IsConnected;
-                        break;
-                    case 2:
-                        controller = new Controller(UserIndex.Two);
-                        connected = controller.IsConnected;
-                        break;
-                    case 3:
-                        controller = new Controller(UserIndex.Three);
-                        connected = controller.IsConnected;
-                        break;
-                    case 4:
-                        controller = new Controller(UserIndex.Four);
-                        connected = controller.IsConnected;
-                        break;
-                    default:
-                        controller = new Controller(UserIndex.One);
-                        connected = controller.IsConnected;
-                        break;
+                    controller = pinned;
+                    usingHid = false;
+                    connected = true;
+                    return;
                 }
+            }
+
+            for (int i = 0; i < 4; i++)
+            {
+                Controller candidate = new Controller((UserIndex)i);
+                if (candidate.IsConnected)
+                {
+                    controller = candidate;
+                    usingHid = false;
+                    connected = true;
+                    return;
+                }
+            }
+
+            if (hid == null) hid = new RaidPadHidController();
+            if (hid.EnsureOpen())
+            {
+                usingHid = true;
+                connected = true;
+            }
+            else
+            {
+                usingHid = false;
+                connected = false;
+            }
+        }
+
+        /// <summary>Aim assist skips the dead and, optionally, your own group.</summary>
+        private bool IsAimAssistTarget(LocalPlayer target)
+        {
+            try
+            {
+                if (target.HealthController != null && !target.HealthController.IsAlive) return false;
+                if (RaidPadPlugin.ExcludeTeammates.Value && Player != null)
+                {
+                    string groupId = target.GroupId;
+                    // Solo raids leave GroupId empty on everyone, so an empty id must never match.
+                    if (!string.IsNullOrEmpty(groupId) && groupId == Player.GroupId) return false;
+                }
+                return true;
+            }
+            catch
+            {
+                return true;
             }
         }
 
@@ -1522,29 +1646,7 @@ namespace RaidPad
             eventSystem = FindObjectOfType<EventSystem>();
             pointerEventData = new PointerEventData(eventSystem);
             pointerEventData.button = PointerEventData.InputButton.Left;
-            switch (RaidPadPlugin.UserIndex.Value)
-            {
-                case 1:
-                    controller = new Controller(UserIndex.One);
-                    connected = controller.IsConnected;
-                    break;
-                case 2:
-                    controller = new Controller(UserIndex.Two);
-                    connected = controller.IsConnected;
-                    break;
-                case 3:
-                    controller = new Controller(UserIndex.Three);
-                    connected = controller.IsConnected;
-                    break;
-                case 4:
-                    controller = new Controller(UserIndex.Four);
-                    connected = controller.IsConnected;
-                    break;
-                default:
-                    controller = new Controller(UserIndex.One);
-                    connected = controller.IsConnected;
-                    break;
-            }
+            ResolveController();
 
             if (player != null)
             {
@@ -2136,7 +2238,14 @@ namespace RaidPad
             if (Commands.Count != 0 && inputTree != null)
             {
                 TranslateInputInvokeParameters[0] = Commands;
-                TranslateInput.Invoke(inputTree, TranslateInputInvokeParameters);
+                try
+                {
+                    TranslateInput.Invoke(inputTree, TranslateInputInvokeParameters);
+                }
+                catch (Exception ex)
+                {
+                    RaidPadPlugin.Log.LogError($"RaidPad: command dispatch failed for [{string.Join(",", Commands)}]: {ex}");
+                }
             }
         }
         public void ToggleSet(string RaidPadSet)
@@ -4622,8 +4731,8 @@ namespace RaidPad
                     }
                     else
                     {
-                        bool IsBeingLoadedMagazine = Traverse.Create(Traverse.Create(onPointerEnterItemView).Property("IsBeingLoadedMagazine").GetValue<object>()).Field("gparam_0").GetValue<bool>();
-                        bool IsBeingUnloadedMagazine = Traverse.Create(Traverse.Create(onPointerEnterItemView).Property("IsBeingUnloadedMagazine").GetValue<object>()).Field("gparam_0").GetValue<bool>();
+                        bool IsBeingLoadedMagazine = Traverse.Create(Traverse.Create(onPointerEnterItemView).Property("IsBeingLoadedMagazine").GetValue<object>()).Field("CurrentState").GetValue<bool>();
+                        bool IsBeingUnloadedMagazine = Traverse.Create(Traverse.Create(onPointerEnterItemView).Property("IsBeingUnloadedMagazine").GetValue<object>()).Field("CurrentState").GetValue<bool>();
                         if (IsBeingLoadedMagazine || IsBeingUnloadedMagazine)
                         {
                             itemController.StopProcesses();
@@ -4731,8 +4840,8 @@ namespace RaidPad
                 ItemController ItemController = Traverse.Create(onPointerEnterItemView).Field("ItemController").GetValue<ItemController>();
                 if (ItemController != null)
                 {
-                    bool IsBeingLoadedMagazine = Traverse.Create(Traverse.Create(onPointerEnterItemView).Property("IsBeingLoadedMagazine").GetValue<object>()).Field("gparam_0").GetValue<bool>();
-                    bool IsBeingUnloadedMagazine = Traverse.Create(Traverse.Create(onPointerEnterItemView).Property("IsBeingUnloadedMagazine").GetValue<object>()).Field("gparam_0").GetValue<bool>();
+                    bool IsBeingLoadedMagazine = Traverse.Create(Traverse.Create(onPointerEnterItemView).Property("IsBeingLoadedMagazine").GetValue<object>()).Field("CurrentState").GetValue<bool>();
+                    bool IsBeingUnloadedMagazine = Traverse.Create(Traverse.Create(onPointerEnterItemView).Property("IsBeingUnloadedMagazine").GetValue<object>()).Field("CurrentState").GetValue<bool>();
                     if (IsBeingLoadedMagazine || IsBeingUnloadedMagazine)
                     {
                         ItemController.StopProcesses();
@@ -4825,6 +4934,27 @@ namespace RaidPad
                 }
             }
         }
+        /// <summary>
+        /// Rotate whatever the menu cursor is dragging. Out of raid there is no tracked
+        /// DraggedItemView, so find the live one instead.
+        /// </summary>
+        private void ControllerRotateMenuDragged()
+        {
+            try
+            {
+                DraggedItemView draggedItemView = FindObjectOfType<DraggedItemView>();
+                if (draggedItemView == null || !draggedItemView.gameObject.activeInHierarchy) return;
+
+                object ItemContext = Traverse.Create(draggedItemView).Property("ItemContext").GetValue<object>();
+                if (ItemContext == null) return;
+
+                ItemRotation ItemRotation = Traverse.Create(ItemContext).Field("ItemRotation").GetValue<ItemRotation>();
+                DraggedItemViewMethodRotateItem.Invoke(draggedItemView, new object[1] { (ItemRotation == ItemRotation.Horizontal ? ItemRotation.Vertical : ItemRotation.Horizontal) });
+            }
+            catch
+            {
+            }
+        }
         private void ControllerSplitDragged()
         {
             if (Dragging && pointerEventData != null)
@@ -4897,11 +5027,11 @@ namespace RaidPad
             {
                 pointerEventData.position = globalPosition;
                 ItemUiContext itemUiContext = ItemUiContext.Instance;
-                if (itemUiContext && onPointerEnterItemView.Item != null && ItemUIContextDialogWindowContext != null)
+                if (itemUiContext && onPointerEnterItemView.Item != null && ItemUIContextBindItem != null)
                 {
                     ItemUIContextInvokeParameters[0] = onPointerEnterItemView.Item;
                     ItemUIContextInvokeParameters[1] = bindIndex;
-                    ItemUIContextDialogWindowContext.Invoke(itemUiContext, ItemUIContextInvokeParameters);
+                    ItemUIContextBindItem.Invoke(itemUiContext, ItemUIContextInvokeParameters);
                 }
             }
         }
@@ -4921,8 +5051,8 @@ namespace RaidPad
                 {
                     lastIntSliderValue = Value;
                     SplitDialogAutoMove = true;
-                    int int_1 = Traverse.Create(_intSlider).Field("int_1").GetValue<int>() - 1;
-                    _intSlider.UpdateValue((_intSlider.CurrentValue() + int_1) + ((LB || RB) ? Value * 10 : Value));
+                    int minValue = Traverse.Create(_intSlider).Field("_minValue").GetValue<int>() - 1;
+                    _intSlider.UpdateValue((_intSlider.CurrentValue() + minValue) + ((LB || RB) ? Value * 10 : Value));
                 }
                 StepSlider _stepSlider = Traverse.Create(splitDialog).Field("_stepSlider").GetValue<StepSlider>();
                 if (_stepSlider != null && _stepSlider.gameObject.activeSelf)
@@ -4930,9 +5060,9 @@ namespace RaidPad
                     lastIntSliderValue = Value;
                     SplitDialogAutoMove = true;
                     //Temp
-                    int int_0 = Traverse.Create(_stepSlider).Field("int_0").GetValue<int>();
-                    int int_1 = Traverse.Create(_stepSlider).Field("int_1").GetValue<int>();
-                    _stepSlider.Show(int_0, int_1, (int)_stepSlider.CurrentValue() + ((LB || RB) ? Value * 10 : Value));
+                    int minValue = Traverse.Create(_stepSlider).Field("_minValue").GetValue<int>();
+                    int maxValue = Traverse.Create(_stepSlider).Field("_maxValue").GetValue<int>();
+                    _stepSlider.Show(minValue, maxValue, (int)_stepSlider.CurrentValue() + ((LB || RB) ? Value * 10 : Value));
                 }
             }
         }
@@ -5231,8 +5361,8 @@ namespace RaidPad
                     }
                     else
                     {
-                        bool IsBeingLoadedMagazine = Traverse.Create(Traverse.Create(onPointerEnterItemView).Property("IsBeingLoadedMagazine").GetValue<object>()).Field("gparam_0").GetValue<bool>();
-                        bool IsBeingUnloadedMagazine = Traverse.Create(Traverse.Create(onPointerEnterItemView).Property("IsBeingUnloadedMagazine").GetValue<object>()).Field("gparam_0").GetValue<bool>();
+                        bool IsBeingLoadedMagazine = Traverse.Create(Traverse.Create(onPointerEnterItemView).Property("IsBeingLoadedMagazine").GetValue<object>()).Field("CurrentState").GetValue<bool>();
+                        bool IsBeingUnloadedMagazine = Traverse.Create(Traverse.Create(onPointerEnterItemView).Property("IsBeingUnloadedMagazine").GetValue<object>()).Field("CurrentState").GetValue<bool>();
                         if (IsBeingLoadedMagazine)
                         {
                             return "Stop Loading Mag";
