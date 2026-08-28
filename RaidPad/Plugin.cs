@@ -35,6 +35,7 @@ namespace RaidPad
         // Menu Cursor
         public static ConfigEntry<bool> MenuCursorEnabled { get; set; }
         public static ConfigEntry<bool> MenuCursorCrosshair { get; set; }
+        public static ConfigEntry<bool> MenuCursorSwapTriggers { get; set; }
         public static ConfigEntry<float> MenuCursorSpeed { get; set; }
         public static ConfigEntry<float> MenuScrollSpeed { get; set; }
         public static ConfigEntry<KeyCode> MenuRotateKey { get; set; }
@@ -119,6 +120,7 @@ namespace RaidPad
             UserIndex = Config.Bind("RaidPad", "User Index", 0, new ConfigDescription("XInput slot. 0 = Auto (scan all slots, pick the first connected pad — recommended, and required for DS4Windows / Steam Input / ViGEm virtual pads that may land on any slot). 1-4 = pin a specific slot.", new AcceptableValueRange<int>(0, 4), new ConfigurationManagerAttributes { Order = 100 }));
 
             MenuCursorEnabled = Config.Bind("Menu Cursor", "Enabled", true, new ConfigDescription("Out of raid, drive the Windows mouse cursor with the pad so you can navigate menus (main menu, stash, traders, flea, settings). Right stick = move, left stick = scroll, left click = A or LT, right click = RT, X/Square = rotate held item, B = back/Escape. In-raid controls are unaffected.", null, new ConfigurationManagerAttributes { Order = 90 }));
+            MenuCursorSwapTriggers = Config.Bind("Menu Cursor", "Swap Trigger Clicks", false, new ConfigDescription("Swap which trigger clicks which mouse button in menus. Off: LT = left click, RT = right click. On: LT = right click, RT = left click. A / Cross stays left click either way, and in-raid trigger binds are unaffected.", null, new ConfigurationManagerAttributes { Order = 88 }));
             MenuCursorCrosshair = Config.Bind("Menu Cursor", "Draw Crosshair Overlay", true, new ConfigDescription("Draw RaidPad's own crosshair at the cursor. EFT's native pointer is force-shown while the menu cursor is active, so once you confirm you can see the real cursor you can turn this off. Leave on as a fallback (e.g. exclusive fullscreen may hide the hardware cursor).", null, new ConfigurationManagerAttributes { Order = 85 }));
             MenuCursorSpeed = Config.Bind("Menu Cursor", "Cursor Speed", 1600f, new ConfigDescription("Cursor movement speed in pixels per second at full right-stick deflection.", new AcceptableValueRange<float>(200f, 5000f), new ConfigurationManagerAttributes { Order = 80 }));
             MenuScrollSpeed = Config.Bind("Menu Cursor", "Scroll Speed", 15f, new ConfigDescription("Scroll-wheel notches per second at full left-stick deflection.", new AcceptableValueRange<float>(1f, 60f), new ConfigurationManagerAttributes { Order = 70 }));

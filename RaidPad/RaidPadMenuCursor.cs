@@ -8,7 +8,8 @@ namespace RaidPad
     /// <summary>
     /// Out-of-raid menu driver. EFT's menus are plain mouse UI, so instead of synthesising EFT
     /// input commands this drives the real Windows cursor: right stick moves, left stick scrolls,
-    /// A/LT is left click, RT is right click, X rotates the held item and B sends Escape.
+    /// A/LT is left click, RT is right click (triggers swappable), X rotates the held item
+    /// and B sends Escape.
     /// </summary>
     public class RaidPadMenuCursor
     {
@@ -105,9 +106,12 @@ namespace RaidPad
                 scrollAccum = 0f;
             }
 
-            // Left click: A or left trigger
-            bool left = gp.Buttons.HasFlag(GamepadButtonFlags.A)
-                        || (float)gp.LeftTrigger / 255f > RaidPadPlugin.LTDeadzone.Value;
+            // Clicks: A is always left, and the triggers can be swapped in the config.
+            bool ltPressed = (float)gp.LeftTrigger / 255f > RaidPadPlugin.LTDeadzone.Value;
+            bool rtPressed = (float)gp.RightTrigger / 255f > RaidPadPlugin.RTDeadzone.Value;
+            bool swap = RaidPadPlugin.MenuCursorSwapTriggers.Value;
+
+            bool left = gp.Buttons.HasFlag(GamepadButtonFlags.A) || (swap ? rtPressed : ltPressed);
             if (left && !prevLeft)
             {
                 mouse_event(MOUSEEVENTF_LEFTDOWN, 0u, 0u, 0u, UIntPtr.Zero);
@@ -120,8 +124,7 @@ namespace RaidPad
             }
             prevLeft = left;
 
-            // Right click: right trigger
-            bool right = (float)gp.RightTrigger / 255f > RaidPadPlugin.RTDeadzone.Value;
+            bool right = swap ? ltPressed : rtPressed;
             if (right && !prevRight)
             {
                 mouse_event(MOUSEEVENTF_RIGHTDOWN, 0u, 0u, 0u, UIntPtr.Zero);
